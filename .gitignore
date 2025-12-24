@@ -1,0 +1,7 @@
+.idea/
+/cmake-**/
+/bin/installer/
+/run/
+src/nfc-app/app-qt/src/main/cpp/QtConfig.h
+/build
+/nfc-hce

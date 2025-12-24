@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="app">
+        <file alias="app-icon">rc/hce-lab.ico</file>
+        <file alias="app-splash">rc/hce-lab.png</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,309 @@
+How to communicate with an NFC reader
+-------------------------------------
+
+NOTE: this is low level documentation if you want to understand how 
+      to communicate with the PN532 in the ACS ACR122, it is not necessary to 
+      understand this to use the library
+
+To use a device with a PN532 in NFCIP mode (P2P) is rather straightforward as 
+is demonstrated by this library. This document will show you what APDUs to send 
+at which moment as briefly as possible. See [1,2,3,7] for more detailed 
+information on how everything is supposed to fit together. This document 
+describes the required commands for the PN532 to communicate in P2P mode. The 
+hardware I tested this with is the ACS ACR122 [4] with the NXP PN532 chip. 
+This is the (relatively cheap) reader sold by for example TikiTag [5]. 
+
+There are two modes considered here. INITIATOR and TARGET. It is a matter of 
+sending the right APDUs to the reader. In Java 6 you can use the 
+"javax.smartcardio.*" API for this [6]. For other platforms there are probably 
+similar ways of communicating with readers.
+
+Communicating with the reader happens through APDUs (which are byte arrays of 
+data) in which certain functionality of for example a smart card are accessed.
+The ACS ACR122 is however a little bit different as it also supports "pseudo 
+APDUs" which talk to the reader itself rather then to a smart card. By sending 
+a specific (pseudo) APDU you can access the functionality of the PN532 chip 
+built in, or some reader specific functionality like modifying the status of 
+the LED. 
+
+The header for sending commands meant for the PN532 is:
+
+  0xff 0x00 0x00 0x00 0xii
+
+Where "ii" is the size of the rest of the command including the command 
+instruction. An example of an actual APDU command sent to the terminal to send 
+data to a target (see below) looks like this (>>). The response is 
+also shown (<<)
+
+  >> 0xff 0x00 0x00 0x00 0x09 0xd4 0x40 0x01 0x30 0x31 0x32 0x33 0x34 0x00
+  << 0xd5 0x41 0x00 0x30 0x31 0x32 0x33 0x34 0x00 0x90 0x00
+
+This sends the data `0x30 0x31 0x32 0x33 0x34 0x00` which is a string 
+representation of `01234`. The response includes the same data in this example.
+
+We also didn't mention that the responses to the commands all end with 0x90 
+0x00 as that is always the case with successfully executed APDUs. In case of a 
+wrong command the result will only be two bytes which indicate an error. See 
+for example [2] for a description of some errors for the ACR122.
+
+NFCIP Initiator Mode
+--------------------
+The first step is to set the mode to initiator and wait for a target to appear. 
+This is done by sending the command "InJumpForDEP" which is "0xd4 0x56". It has
+a few parameters that are encoded in the APDU. A full example:
+
+Configure as initiator and wait for targets
+-------------------------------------------
+There are two ways to do this. You can ask for a target and the first one to 
+reply becomes your target, or the other method is to ask for multiple targets 
+and select the one you want (possibly alternating), so you can manage two 
+targets at the same time.
+
+Activating one target
+---------------------
+This is used to initialize and activate a target directly with one command, you 
+get one active target this way.
+
+  ** Command to PN532 **
+  0xd4 0x56                   InJumpForDEP instruction code
+  0x00                        Look for Passive/Active Target 
+                                (0x00 = passive, 0x01 = active)
+  0x02                        Baud Rate 
+                                (0x00 = 106kbps, 0x01 = 212kbps, 0x02 = 424kbps)
+  0x01                        Whether or not there is a payload in this command
+                                (0x01 = yes)
+  0x00 0xff 0xff 0x00 0x00    Polling Request?
+
+Every command is answered with a response, in this case as soon as a target is 
+in range.
+
+  ** Response from PN532 **
+  0xd5 0x57                   InJumpForDEP response code
+  0x00                        Status 
+                                (0x00 = no error)
+  0x01                        Target number (used for sending data later)
+
+This is followed by the ATR_RES bytes which we won't be using in the rest of 
+the protocol.
+
+Initializing and activate one or more targets
+---------------------------------------------
+There is also another way to select and initialize a target, or multiple 
+targets. The PN532 supports two targets at a time. This command is to list and 
+initialize one or more targets:
+
+  ** Command to PN532 **
+  0xd4 0x4a                   InListPassivTargets instruction code
+  0x01                        Look for this number of targets
+  0x02                        Baud Rate 
+                                (0x00 = 106kbps, 0x01 = 212kbps, 0x02 = 424kbps)
+  0x00 0xff 0xff 0x00 0x00    Polling Request?
+
+  ** Response from PN532 **
+  0xd5 0x4b                   InListPassivTargets response code
+  0x01                        Number of targets found 
+                                (here 1 target found)
+  0x01                        The following bytes describe target 1
+  0x12                        The target information has 12 bytes including 
+                                this one
+  0x01                        Maybe the real communication speed?
+  0x01 0xFE 0xDD 0x8E 0xCF 0x70 0x29 0xE2
+                              This target NFCID3 
+                                (used for selecting it with InSelect later)
+  0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+                              Padding?
+
+Activate target:
+
+  ** Command to PN532 **
+  0xd4 0x50                   InATR instruction code
+  0x01                        Activate target with this number
+                                (here number 1)
+  0x01 0xFE 0xDD 0x8E 0xCF 0x70 0x29 0xE2
+                              The NFCID3 from previous response
+
+  ** Response from PN532 **
+  0xd5 0x51                   InATR` response code
+  0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+  0x00 0x00 0x00 0x00 0x00 0x00 0x0A 0x00
+                              ATR_RES?
+
+The sending and receiving of data is the same as with the other method (see 
+below). The advantage here is that you can scan for targets and select the one 
+you need, allowing for multiple targets at the same time!
+
+Send data to a target
+---------------------
+
+  ** Command to PN532 **
+  0xd4 0x40                   InDataExchange instruction code
+  0x01                        Target to send to 
+                                (see response from previous command)
+  ... ... ...                 The rest are the bytes to be send to the target.
+                              The maximum number of bytes seems to be 252?
+
+  ** Response from PN532 **
+  0xd5 0x41                   InDataExchange reponse code
+  0x00                        Status 
+                                (0x00 = no error)
+  ... ... ...                 The rest are the bytes received from the target, 
+                                this is how the target sends data to the 
+                                initiator by replying with it in the response 
+                                to the received data
+
+Release a target
+----------------
+
+  ** Command to PN532 **
+  0xd4 0x52                   InRelease instruction code
+  0x01                        Target to release
+                                (0x00 = release all targets)
+
+  ** Response from PN532 **
+  0xd5 0x53                   InRelease response code
+  0x00                        Status 
+                                (0x00 = no error)
+
+NFCIP Target Mode
+-----------------
+
+Configure as target and wait for initiators
+-------------------------------------------
+
+ ** Command to PN532 **
+  0xd4 0x8c                   TgInitAsTarget instruction code
+  0x00                        Acceptable modes 
+                               (0x00 = allow all, 0x01 = only allow to be 
+                               initialized as passive, 0x02 = allow DEP only)
+
+  _6 bytes (_MIFARE_)_:
+  0x08 0x00                   SENS_RES
+  0x12 0x34 0x56              NFCID1
+  0x40                        SEL_RES
+
+  _18 bytes (_Felica_)_:
+  0x01 0xfe 0xa2 0xa3 0xa4 0xa5 0xa6 0xa7
+                              NFCID2
+  0xc0 0xc1 0xc2 0xc3 0xc4 0xc5 0xc6 0xc7
+                              ?
+  0xff 0xff                   System parameters?
+  0xaa 0x99 0x88 0x77 0x66 0x55 0x44 0x33 0x22 0x11
+                              NFCID3
+  0x00                        ?
+  0x00                        ?
+
+This is the response when an initiator activated this target:
+
+  ** Response from PN532 **
+  0xd5 0x8d                   TgInitAsTarget response code
+  0x04                        Mode
+                                (0x04 = DEP, 106kbps)
+  ... ... ...                 ?
+
+Receive data from initiator
+---------------------------
+
+  ** Command to PN532 **
+  0xd4 0x86                   TgGetData instruction code
+
+  ** Response from PN532 **
+  0xd5 0x87                   TgGetData response code
+  0x00                        Status 
+                              (0x00 = no error, bit 6 set: See "Meta Chaining")
+  ... ... ...                 The rest are the bytes received from initiator
+
+Send data to initiator
+----------------------
+
+  ** Command to PN532 **
+  0xd4 0x8e                   TgSetData instruction code
+  ... ... ...                 The rest are the bytes to be send to initiator
+
+  ** Reponse from the PN532 **
+  0xd5 0x8f                   TgSetData response code
+  0x00                        Status 
+                                (0x00 = no error)
+
+Send data to initiator (Meta Chaining)
+--------------------------------------
+
+  ** Command to PN532 **
+  0xd4 0x94                   TgSetMetaData instruction code
+  ... ... ...                 The rest are the bytes to be send to initiator
+
+  ** Reponse from the PN532 **
+  0xd5 0x95                   TgSetMetaData response code
+  0x00                        Status 
+                                (0x00 = no error)
+
+Chaining
+--------
+Whenever you want to send more data then possible (the amount of data is 
+seemingly limited to 252 bytes) you have can use "chaining". There are two ways 
+to do this with the PN532. You can either implement it yourself completely or 
+use the "meta chaining" provided by the PN532. Below both techniques will be 
+shown:
+
+Initiator Meta Chaining
+-----------------------
+First we look at the situation from the initiator. Using meta chaining the 
+initiator uses the InDataExchange command specifying the target and setting bit
+6 of the target field to indicate that there is more data coming. This bit 6 
+remains set while there is more data and is removed in the last data block.
+
+The response from the InDataExchange command can be ignored, except with the 
+last block where bit 6 is not set. At this point the returned data is the data
+the target wants to send back. The status byte of the returned data indicates
+whether also the target wants to send more data back than just one block. If 
+bit 6 is set in the status field the initiator can request the rest using an
+empty InDataExchange command, just specifying the target.
+
+
+  InDataExchange(target byte with bit 6 set,     block 1)
+  InDataExchange(target byte with bit 6 set,     block 2)
+         :              :
+  InDataExchange(target byte with bit 6 cleared, block n)
+
+     look at the response code from the last InDataExchange, if bit 6 is set
+     there is more data coming than just the data in this block
+
+  InDataExchange(target), while status byte has bit 6 set
+
+Target Meta Chaining
+--------------------
+The target looks at the status field of TgGetData to see whether or not more 
+data is coming in this transfer. While this bit is set the target can request
+more data with TgGetData. 
+
+Once all data has been received the target can send back data. No bit needs to 
+be set when more data is being sent. Just a different command. For a single 
+block one uses TgSetData and for sending multiple blocks one uses TgSetMetaData.
+
+*FIXME* What about the last block? This is done using TgSetData again?
+
+Custom Chaining
+---------------
+When using custom chaining, so without setting or reading bit 6 or the target 
+and status fields the communication is a little bit different for the target.
+Behavior for the initiator stays the same (except that bit 6 is not set 
+anymore). The target now can't send TgGetData repeatedly, but has to use 
+TgSetData without sending any actual data before using TgGetData again. In this 
+situation TgSetMetaData is not used.
+
+References
+----------
+[1] http://www.diganttechnologies.com/nfc_1.pdf 
+      (retrieved November 15th 2008)
+[2] http://www.acs.com.hk/download/ACR122/API_ACR122U.pdf 
+      (retrieved November 15th 2008)
+[3] http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-340.pdf 
+      (retrieved November 15th 2008)
+[4] http://www.acs.com.hk/acr122.php 
+      (retrieved November 15th 2008)
+[5] http://www.tikitag.com/ 
+      (retrieved November 15th 2008)
+[6] http://java.sun.com/javase/6/docs/jre/api/security/smartcardio/spec/ 
+      (retrieved November 15th 2008)
+[7] _Beyond Device Pairing: New Interactions on NFC Enabled Mobile Phones_ 
+      http://www.cs.washington.edu/homes/yanokwa/papers/anokwa_qualspaper.pdf 
+      (retrieved November 17th 2008)
