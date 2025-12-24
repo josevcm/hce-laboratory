@@ -10,6 +10,7 @@ A high-performance, low-latency implementation of the **ISO/IEC 14443-4 (ISO-DEP
 
 > [!IMPORTANT]
 > I'm open to ideas, but please don't open issues. I know there's still a lot to do...
+> If you like this project, please leave me a star or email me, so I know it generates interest in continuing to work on it.
 
 ## Overview
 
