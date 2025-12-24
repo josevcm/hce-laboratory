@@ -1,5 +1,7 @@
 # HCE Laboratory - Host card emulator for PN7160
 
+A high-performance, low-latency implementation of the **ISO/IEC 14443-4 (ISO-DEP)** HCE designed for the **PN7160** NFC Controller. This framework enables advanced Card Emulation (CE) and protocol analysis on **PC** platforms.
+
 > [!NOTE]
 > This project is still in an early stage. I’m publishing it so it can be useful to those who are researching the PN7160 chip or HCE emulation.
 
@@ -8,8 +10,6 @@
 
 > [!IMPORTANT]
 > I'm open to ideas, but please don't open issues. I know there's still a lot to do...
-
-A high-performance, low-latency implementation of the **ISO/IEC 14443-4 (ISO-DEP)** HCE designed for the **PN7160** NFC Controller. This framework enables advanced Card Emulation (CE) and protocol analysis on **PC** platforms.
 
 ## Overview
 
