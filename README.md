@@ -95,9 +95,9 @@ For PN7160 I use the development board [OM27160B1](https://www.nxp.com/design/de
 | #5  | Not connected                      |
 | #6  | Not connected                                                 |
 
-**FT323H Breakout (USB-C to SPI bridge)**
+**FT232H Breakout (USB-C to SPI bridge)**
 
-![FT323H-breakout.png](doc/screenshots/FT323H-breakout.png)
+![FT232H-breakout.png](doc/screenshots/FT232H-breakout.png)
 
 ## Hardware Connection Schema (SPI mode)
 
@@ -117,13 +117,13 @@ To interface the OM2760B1HN with the Adafruit FT232H, follow this pin mapping. T
 | 5V         | J1/#2 - 5V	    | System Power	       | Main power supply for the board  |
 
 
-### FT323H & OM27160B1HN connection
+### FT232H & OM27160B1HN connection
 
-![FT323H-OM27160B1HN-connection.png](doc/screenshots/FT323H-OM27160B1HN-connection.png)
+![FT232H-OM27160B1HN-connection.png](doc/screenshots/FT232H-OM27160B1HN-connection.png)
 
 **Homemade board stack**
 
-![FT323H-OM27160B1HN.png](doc/screenshots/FT323H-OM27160B1HN.png)
+![FT232H-OM27160B1HN.png](doc/screenshots/FT232H-OM27160B1HN.png)
 
 *Note: C1 PIN is connected only for mechanical stability, not used for anymore.*
 
@@ -146,7 +146,7 @@ The following links are the original online resource links are archived here for
 
 # Usage and build instructions
 
-## FT223h Setup
+## FT232H Setup
 
 For the USB-SPI adapter to work properly, it is necessary to configure the digital signals using the [**FT_Prog**](https://ftdichip.com/utilities/) utility. FT_PROG only works with the native driver, so do not change it until you complete this procedure.
 
