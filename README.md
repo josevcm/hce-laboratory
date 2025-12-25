@@ -116,12 +116,6 @@ To interface the OM2760B1HN with the Adafruit FT232H, follow this pin mapping. T
 | 3V         | J1/#1 - 3V      | Logic Level VCC     | Reference for I/O logic levels    |
 | 5V         | J1/#2 - 5V	    | System Power	       | Main power supply for the board  |
 
-With these boards using SPI at 1MHz I can achieve response times between 2.5 and 3.5ms. Most of the time this corresponds to USB bus latency, so with careful configuration and improvements it could be lower, but it will never drop below 1.5ms. The CPU processing time on the host is practically negligible in comparison.
-
-This is the measure taken with my other application [nfc-laboratory](https://github.com/josevcm/nfc-laboratory) using an Android mobile as a reader and the PN7160 as a card emulator.
-
-![nfc-lab-screenshot2.png](doc/screenshots/nfc-lab-screenshot2.png)
-
 ### FT232H & OM27160B1HN connection
 
 ![FT232H-OM27160B1HN-connection.png](doc/screenshots/FT232H-OM27160B1HN-connection.png)
@@ -131,6 +125,14 @@ This is the measure taken with my other application [nfc-laboratory](https://git
 ![FT232H-OM27160B1HN.png](doc/screenshots/FT232H-OM27160B1HN.png)
 
 *Note: C1 PIN is connected only for mechanical stability, not used for anymore.*
+
+## Emulation Timings
+
+With these boards using SPI at 1MHz I can achieve response times between 2.5 and 3.5ms. Most of the time this corresponds to USB bus latency, so with careful configuration and improvements it could be lower, but it will never drop below 1.5ms. The CPU processing time on the host is practically negligible in comparison.
+
+This is the measure taken with my other application [nfc-laboratory](https://github.com/josevcm/nfc-laboratory) using an Android mobile as a reader and the PN7160 as a card emulator.
+
+![nfc-lab-screenshot2.png](doc/screenshots/nfc-lab-screenshot2.png)
 
 ## Targets supported
 
