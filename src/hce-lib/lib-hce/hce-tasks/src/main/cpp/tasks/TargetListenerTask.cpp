@@ -26,14 +26,13 @@
 
 #include <hce/Frame.h>
 
-#include <hce/Target.h>
-#include <hce/targets/t4t/T4T.h>
+#include <hce/targets/T4T.h>
 
 #include <hce/tasks/TargetListenerTask.h>
 
 #include "AbstractTask.h"
 
-namespace hce {
+namespace hce::tasks {
 
 struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
 {

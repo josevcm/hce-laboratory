@@ -23,7 +23,7 @@
 
 #include <hce/crypto/CipherAES.h>
 
-namespace hce {
+namespace hce::crypto {
 
 CipherAES::CipherAES() : block(16)
 {

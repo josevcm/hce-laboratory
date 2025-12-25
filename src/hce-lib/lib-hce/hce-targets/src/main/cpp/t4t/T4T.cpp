@@ -23,13 +23,13 @@
 
 #include <rt/Logger.h>
 
-#include <hce/targets/t4t/T4T.h>
+#include <hce/targets/T4T.h>
 
 namespace hce::targets {
 
 struct T4T::Impl
 {
-   rt::Logger *log = rt::Logger::getLogger("hce.targets.T4T");
+   rt::Logger *log = rt::Logger::getLogger("hce.targets.t4t.T4T");
 
    // target parameters
    unsigned short targetATQA = 0x4403;

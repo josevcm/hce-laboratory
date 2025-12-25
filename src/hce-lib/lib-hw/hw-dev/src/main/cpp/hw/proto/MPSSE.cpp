@@ -20,15 +20,10 @@
 */
 
 #include <unistd.h>
-#include <windows.h>
 
 #include "rt/Finally.h"
 
-#if LIBFTDI1 == 1
 #include <libftdi1/ftdi.h>
-#else
-#include <ftdi.h>
-#endif
 
 #include <rt/Logger.h>
 #include <rt/ByteBuffer.h>
@@ -190,7 +185,7 @@ struct MPSSE::Impl
          ftdi_free(ftdi);
    }
 
-   int open(const Protocol protocol, const unsigned int clock, const Endianess endianess)
+   int open(const Protocol protocol, const unsigned int clock, const ByteOrder endianess)
    {
       close();
 
@@ -567,11 +562,11 @@ struct MPSSE::Impl
       return true;
    }
 
-   int setMode(const Protocol proto, const Endianess bo)
+   int setMode(const Protocol proto, const ByteOrder bo)
    {
       LOG_INFO(log, "setMode, protocol: {}, endianess: {}", {proto, bo});
 
-      const unsigned char bits = (bo == BIG_ENDIAN ? MSB : LSB);
+      const unsigned char bits = (bo == BYTEORDER_BIG_ENDIAN ? MSB : LSB);
 
       mode.tx = MPSSE_DO_WRITE | bits;
       mode.rx = MPSSE_DO_READ | bits;
@@ -805,7 +800,7 @@ MPSSE::MPSSE() : impl(std::make_shared<Impl>())
 {
 }
 
-bool MPSSE::open(const Protocol protocol, const unsigned int clock, Endianess endianess)
+bool MPSSE::open(const Protocol protocol, const unsigned int clock, ByteOrder endianess)
 {
    return impl->open(protocol, clock, endianess);
 }

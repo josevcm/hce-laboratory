@@ -24,7 +24,7 @@
 
 #include <rt/ByteBuffer.h>
 
-namespace hce {
+namespace hce::crc {
 
 struct CRC
 {

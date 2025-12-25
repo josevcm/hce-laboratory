@@ -85,6 +85,7 @@ target_include_directories(hce-lab PRIVATE ${LIBUSB_INCLUDE_DIR})
 
 target_link_libraries(hce-lab
         ${PLATFORM_LIBS}
+        ${LIBUSB_LIBRARY}
         hce-core
         hce-tasks
         hce-targets

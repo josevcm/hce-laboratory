@@ -4,7 +4,8 @@ set(PRIVATE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp)
 set(PUBLIC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/main/include)
 
 add_library(hce-targets STATIC
-        # T4T implementation  ---
+
+        # Generic T4T implementation  ---
         src/main/cpp/t4t/T4T.cpp
 )
 

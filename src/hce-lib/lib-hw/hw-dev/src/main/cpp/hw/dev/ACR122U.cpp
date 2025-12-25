@@ -19,16 +19,12 @@ This file is part of HCE-LABORATORY.
 
 */
 
-#include <winscard.h>
-
 #include <hw/dev/PCSC.h>
 #include <hw/dev/ACR122U.h>
 
 #include <rt/Logger.h>
 
 #define DEFAULT_READER_NAME "ACR122"
-
-#define IOCTL_CCID_ESCAPE SCARD_CTL_CODE(3500)
 
 namespace hw {
 
@@ -88,7 +84,7 @@ struct ACR122U::Impl
       directCmd.put(cmd.data(), cmd.limit()); // Data
       directCmd.flip();
 
-      if (pcsc.control(IOCTL_CCID_ESCAPE, directCmd, res) != 0)
+      if (pcsc.control(PCSC::IOCTL_CCID_ESCAPE, directCmd, res) != 0)
       {
          log->error("error sending direct command to ACR122U reader");
          return -1;
@@ -116,7 +112,7 @@ struct ACR122U::Impl
       cmd.put({0xFF, 0x00, 0x51}).put(value).put(0x00); // CLA INS P1 P2=value, Lc=0
       cmd.flip();
 
-      if (pcsc.control(IOCTL_CCID_ESCAPE, cmd, res) != 0)
+      if (pcsc.control(PCSC::IOCTL_CCID_ESCAPE, cmd, res) != 0)
       {
          log->error("error sending operating parameters command to ACR122U reader");
          return -1;

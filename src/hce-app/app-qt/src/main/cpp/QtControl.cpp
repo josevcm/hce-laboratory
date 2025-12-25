@@ -177,7 +177,7 @@ struct QtControl::Impl
     */
    void triggerListenerStart(const std::function<void()> &onComplete = nullptr, const std::function<void(int, const std::string &)> &onReject = nullptr) const
    {
-      listenerCommandStream->next({hce::TargetListenerTask::Start, onComplete, onReject});
+      listenerCommandStream->next({hce::tasks::TargetListenerTask::Start, onComplete, onReject});
    }
 
    /*
@@ -185,7 +185,7 @@ struct QtControl::Impl
     */
    void triggerListenerStop(const std::function<void()> &onComplete = nullptr, const std::function<void(int, const std::string &)> &onReject = nullptr) const
    {
-      listenerCommandStream->next({hce::TargetListenerTask::Stop, onComplete, onReject});
+      listenerCommandStream->next({hce::tasks::TargetListenerTask::Stop, onComplete, onReject});
    }
 };
 

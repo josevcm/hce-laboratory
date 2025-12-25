@@ -21,6 +21,6 @@
 
 #include <hce/crypto/Cipher.h>
 
-namespace hce {
+namespace hce::crypto {
 
 }

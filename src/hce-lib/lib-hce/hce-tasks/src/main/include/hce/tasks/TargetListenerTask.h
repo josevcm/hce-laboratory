@@ -24,7 +24,7 @@
 
 #include <rt/Worker.h>
 
-namespace hce {
+namespace hce::tasks {
 
 class TargetListenerTask : public rt::Worker
 {

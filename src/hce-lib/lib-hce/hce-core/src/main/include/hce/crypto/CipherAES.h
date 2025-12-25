@@ -28,7 +28,7 @@
 
 #include <hce/crypto/Cipher.h>
 
-namespace hce {
+namespace hce::crypto {
 
 class CipherAES : public Cipher
 {

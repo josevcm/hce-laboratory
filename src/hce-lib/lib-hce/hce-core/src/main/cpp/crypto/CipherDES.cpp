@@ -26,7 +26,7 @@
 
 #include <hce/crypto/CipherDES.h>
 
-namespace hce {
+namespace hce::crypto {
 
 CipherDES::CipherDES()
 {

@@ -30,7 +30,7 @@
 
 class DES3;
 
-namespace hce {
+namespace hce::crypto {
 
 class CipherDES : public Cipher
 {

@@ -4,7 +4,6 @@ set(PRIVATE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp)
 set(PUBLIC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/main/include)
 
 add_library(hce-core STATIC
-        src/main/cpp/T4T.cpp
         src/main/cpp/Frame.cpp
         src/main/cpp/Target.cpp
         src/main/cpp/crc/CRC.cpp

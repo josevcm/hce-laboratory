@@ -24,7 +24,7 @@
 
 #include <hce/crypto/CMAC.h>
 
-namespace hce {
+namespace hce::crypto {
 
 rt::ByteBuffer CMAC::cmac(const rt::ByteBuffer &key, const rt::ByteBuffer &input, const rt::ByteBuffer &iv, Mode mode)
 {

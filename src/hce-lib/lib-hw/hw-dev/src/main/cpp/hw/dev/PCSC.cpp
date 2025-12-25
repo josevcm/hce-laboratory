@@ -19,7 +19,9 @@
 
 */
 
+#ifdef _WIN32
 #include <winscard.h>
+#endif
 
 #include <stdexcept>
 
@@ -33,26 +35,32 @@ struct PCSC::Impl
 {
    rt::Logger *log = rt::Logger::getLogger("hw.PCSC");
 
+#ifdef _WIN32
    SCARDCONTEXT hContext = 0;
    SCARDHANDLE hCard = 0;
    DWORD activeProtocol = 0;
+#endif
 
    std::string connectedDevice;
 
    Impl()
    {
+#ifdef _WIN32
       if (LONG rv = SCardEstablishContext(SCARD_SCOPE_USER, nullptr, nullptr, &hContext); rv != SCARD_S_SUCCESS)
       {
          std::string result = std::to_string(rv);
          log->error("error creating context: {}", {result});
          throw std::runtime_error("error creating context: " + result);
       }
+#endif
    }
 
    // Destructor to release the context
    ~Impl()
    {
+#ifdef _WIN32
       SCardReleaseContext(hContext);
+#endif
    }
 
    // List available readers
@@ -60,6 +68,7 @@ struct PCSC::Impl
    {
       std::vector<std::string> readersList;
 
+#ifdef _WIN32
       char readers[65536];
       DWORD readersLen = sizeof(readers);
 
@@ -70,6 +79,7 @@ struct PCSC::Impl
             readersList.emplace_back(reader);
          }
       }
+#endif
 
       return readersList;
    }
@@ -79,6 +89,7 @@ struct PCSC::Impl
       int sharedMode = 0;
       int preferredProtocols = 0;
 
+#ifdef _WIN32
       switch (mode)
       {
          case Direct:
@@ -109,6 +120,9 @@ struct PCSC::Impl
          log->warn("error {} connecting to reader '{}'", {std::to_string(rv), reader});
          return -1;
       }
+#else
+      return -1; // TODO
+#endif
 
       connectedDevice = reader;
 
@@ -117,6 +131,7 @@ struct PCSC::Impl
 
    int disconnect()
    {
+#ifdef _WIN32
       if (!hCard)
          return -1;
 
@@ -125,12 +140,16 @@ struct PCSC::Impl
 
       hCard = 0;
       connectedDevice = "";
+#else
+      return -1; // TODO
+#endif
 
       return 0;
    }
 
    int cardTransmit(const rt::ByteBuffer &cmd, rt::ByteBuffer &resp)
    {
+#ifdef _WIN32
       if (!hCard)
       {
          log->error("device not connected");
@@ -148,9 +167,11 @@ struct PCSC::Impl
          log->warn("error {} transmitting data command to reader '{}'", {std::to_string(rv), connectedDevice});
          return -1;
       }
-
       resp.push(received);
       resp.flip();
+#else
+      return -1; // TODO
+#endif
 
       LOG_DEBUG(log, "RX << {x}", {resp});
 
@@ -159,6 +180,7 @@ struct PCSC::Impl
 
    int cardControl(int controlCode, const rt::ByteBuffer &cmd, rt::ByteBuffer &resp)
    {
+#ifdef _WIN32
       if (!hCard)
       {
          log->error("device not connected");
@@ -166,6 +188,14 @@ struct PCSC::Impl
       }
 
       DWORD received;
+
+      // map IOCTL for windows PCSC
+      switch (controlCode)
+      {
+         case IOCTL_CCID_ESCAPE:
+            controlCode = SCARD_CTL_CODE(3500);
+            break;
+      }
 
       LOG_DEBUG(log, "CONTROL {x} >> {x}", {controlCode, cmd});
 
@@ -177,6 +207,9 @@ struct PCSC::Impl
 
       resp.push(received);
       resp.flip();
+#else
+      return -1; // NOT implementet yet
+#endif
 
       LOG_DEBUG(log, "CONTROL {x} << {x}", {controlCode, resp});
 

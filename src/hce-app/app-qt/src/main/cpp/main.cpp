@@ -78,7 +78,7 @@ int startApp(int argc, char *argv[])
    rt::Logger::setLoggerLevel("app.*", rt::Logger::DEBUG_LEVEL);
    rt::Logger::setLoggerLevel("qt.*", rt::Logger::DEBUG_LEVEL);
    rt::Logger::setLoggerLevel("hw.*", rt::Logger::WARN_LEVEL);
-   rt::Logger::setLoggerLevel("hce.targets.*", rt::Logger::DEBUG_LEVEL);
+   rt::Logger::setLoggerLevel("hce.desfire.*", rt::Logger::DEBUG_LEVEL);
    rt::Logger::setLoggerLevel("worker.*", rt::Logger::INFO_LEVEL);
    rt::Logger::setLoggerLevel("rt.*", rt::Logger::INFO_LEVEL);
 
@@ -177,7 +177,7 @@ int startApp(int argc, char *argv[])
    // create executor service
    rt::Executor executor(128, 5);
 
-   executor.submit(hce::TargetListenerTask::construct(), rt::Executor::PRIORITY_HIGHEST);
+   executor.submit(hce::tasks::TargetListenerTask::construct(), rt::Executor::PRIORITY_HIGHEST);
 
    // start application
    return QtApplication::exec();
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
    rt::Logger::init(std::cout);
 #else
 
-   QDir appPath(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/" + NFC_LAB_COMPANY_NAME + "/" + NFC_LAB_APPLICATION_NAME);
+   QDir appPath(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/" + HCE_LAB_COMPANY_NAME + "/" + HCE_LAB_APPLICATION_NAME);
 
    std::ofstream stream;
 

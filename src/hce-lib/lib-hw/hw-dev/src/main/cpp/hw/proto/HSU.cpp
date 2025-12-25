@@ -19,7 +19,9 @@
 
 */
 
+#ifdef _WIN32
 #include <windows.h>
+#endif
 
 #include <rt/Logger.h>
 
@@ -35,7 +37,9 @@ struct HSU::Impl
 
    std::string device;
 
+#ifdef _WIN32
    HANDLE handle = INVALID_HANDLE_VALUE;
+#endif
 
    enum Mode
    {
@@ -58,6 +62,7 @@ struct HSU::Impl
    {
       close();
 
+#ifdef _WIN32
       const HANDLE hComm = CreateFileA(name.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
 
       if (hComm == INVALID_HANDLE_VALUE)
@@ -101,6 +106,9 @@ struct HSU::Impl
 
       this->device = name;
       this->handle = hComm;
+#else
+      return -1; // TODO
+#endif
 
       log->info("serial port {} opened at {}", {name, config});
 
@@ -109,16 +117,19 @@ struct HSU::Impl
 
    void close()
    {
+#ifdef _WIN32
       if (handle != INVALID_HANDLE_VALUE)
       {
          CloseHandle(handle);
          handle = INVALID_HANDLE_VALUE;
          log->info("serial port {} closed", {device});
       }
+#endif
    }
 
    int transmit(const rt::ByteBuffer &cmd, rt::ByteBuffer &res, int timeout)
    {
+#ifdef _WIN32
       if (handle == INVALID_HANDLE_VALUE)
          return -1;
 
@@ -131,6 +142,9 @@ struct HSU::Impl
 
       if (const int r = recv(res, timeout); r != 0)
          return r;
+#else
+      return -1; // TODO
+#endif
 
       return 0;
    }
@@ -305,6 +319,7 @@ struct HSU::Impl
 
    int read(rt::ByteBuffer &data, int timeout) const
    {
+#ifdef _WIN32
       COMMTIMEOUTS timeouts;
       timeouts.ReadIntervalTimeout = 0;
       timeouts.ReadTotalTimeoutMultiplier = 0;
@@ -350,10 +365,14 @@ struct HSU::Impl
       LOG_DEBUG(log, "RX << {x}", {data});
 
       return static_cast<int>(totalReaded);
+#else
+      return -1; // TODO
+#endif
    }
 
    int write(const rt::ByteBuffer &data, int timeout) const
    {
+#ifdef _WIN32
       DWORD bytesWritten = 0;
 
       LOG_DEBUG(log, "TX >> {x}", {data});
@@ -379,11 +398,16 @@ struct HSU::Impl
       }
 
       return static_cast<int>(bytesWritten);
+#else
+      return -1; // TODO
+#endif
    }
 
    void purge() const
    {
+#ifdef _WIN32
       PurgeComm(handle, PURGE_RXABORT | PURGE_RXCLEAR);
+#endif
    }
 };
 

@@ -48,6 +48,11 @@ class PCSC
          Any = 3
       };
 
+      enum IOCTL
+      {
+         IOCTL_CCID_ESCAPE = 1
+      };
+
    public:
 
       PCSC();

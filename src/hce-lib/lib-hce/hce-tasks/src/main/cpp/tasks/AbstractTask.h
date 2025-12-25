@@ -32,7 +32,7 @@
 
 using json = nlohmann::json;
 
-namespace hce {
+namespace hce::tasks {
 
 struct AbstractTask
 {

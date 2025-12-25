@@ -43,10 +43,10 @@ class MPSSE
          SPI3 = 4
       };
 
-      enum Endianess
+      enum ByteOrder
       {
-         BIG_ENDIAN = 0,
-         LITTLE_ENDIAN = 1
+         BYTEORDER_BIG_ENDIAN = 0,
+         BYTEORDER_LITTLE_ENDIAN = 1
       };
 
       enum Clock
@@ -105,7 +105,7 @@ class MPSSE
 
       MPSSE();
 
-      bool open(Protocol protocol, unsigned int clock = 100000, Endianess endianess = BIG_ENDIAN);
+      bool open(Protocol protocol, unsigned int clock = 100000, ByteOrder endianess = BYTEORDER_BIG_ENDIAN);
 
       void close();
 
@@ -130,8 +130,6 @@ class MPSSE
       std::string deviceName() const;
 
       std::string errorString() const;
-
-      bool batch();
 
    private:
 

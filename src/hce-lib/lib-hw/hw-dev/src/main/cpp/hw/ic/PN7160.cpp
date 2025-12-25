@@ -25,7 +25,6 @@
 // https://community.nxp.com/t5/NFC/What-is-the-response-to-a-CORE-RESET-CMD-command-with-the-PN7150/m-p/1514768#M9630
 
 #include <unistd.h>
-#include <windows.h>
 
 #include <rt/Logger.h>
 #include <rt/Finally.h>

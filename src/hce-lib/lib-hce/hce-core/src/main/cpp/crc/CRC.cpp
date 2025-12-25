@@ -21,7 +21,7 @@
 
 #include <hce/crc/CRC.h>
 
-namespace hce {
+namespace hce::crc {
 
 static const unsigned short CRC_CCITT_TABLE1[256] =
 {
