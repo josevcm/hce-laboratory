@@ -12,7 +12,7 @@ if (WIN32)
     set(PLATFORM_LIBS mingw32 psapi)
 endif (WIN32)
 
-target_link_libraries(hce-t4t hce-tasks hce-targets hce-core hw-dev rt-lang ${PLATFORM_LIBS})
+target_link_libraries(hce-t4t hce-tasks hce-targets hce-core hw-dev rt-lang ${LIBUSB_LIBRARY} ${PLATFORM_LIBS})
 
 # Install targets
 if (UNIX)

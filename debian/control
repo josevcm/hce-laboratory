@@ -1,0 +1,25 @@
+Source: hce-lab
+Section: utils
+Priority: optional
+Maintainer: Jose Vicente Campos <josevcm@gmail.com>
+Rules-Requires-Root: no
+Build-Depends:
+	debhelper-compat (= 12),
+	build-essential, 
+	cmake, 
+	g++, 
+	qt6-base-dev, 
+	zlib1g-dev,
+	libgl1-mesa-dev, 
+	libusb-1.0-0-dev, 
+	libftdi1-dev,
+Standards-Version: 4.6.2
+Homepage: https://github.com/josevcm/hce-laboratory
+Vcs-Browser: https://github.com/josevcm/hce-laboratory
+Vcs-Git: https://github.com/josevcm/hce-laboratory.git
+
+Package: hce-lab
+Architecture: amd64
+Multi-Arch: foreign
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Host card emulator for PN7160
