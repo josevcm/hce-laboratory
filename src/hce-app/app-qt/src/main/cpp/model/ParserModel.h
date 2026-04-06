@@ -42,9 +42,7 @@ class Frame;
 
 class ParserModel : public QAbstractItemModel
 {
-      struct Impl;
-
-   Q_OBJECT
+      Q_OBJECT
 
    public:
 
@@ -55,7 +53,9 @@ class ParserModel : public QAbstractItemModel
 
    public:
 
-      ParserModel(QObject *parent = nullptr);
+      explicit ParserModel(QObject *parent = nullptr);
+
+      ~ParserModel() override;
 
       QVariant data(const QModelIndex &index, int role) const override;
 
@@ -87,7 +87,8 @@ class ParserModel : public QAbstractItemModel
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
 
 #endif

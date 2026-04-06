@@ -22,6 +22,8 @@
 #ifndef HCE_HANDLER_H
 #define HCE_HANDLER_H
 
+#include <nlohmann/json.hpp>
+
 #include <rt/ByteBuffer.h>
 #include <rt/Variant.h>
 
@@ -46,18 +48,20 @@ class Target
       virtual ~Target() = default;
 
       template <typename T>
-      const T &get(int id)
+      T get(int id) const
       {
          return std::get<T>(get(id));
       }
 
-      virtual rt::Variant get(int id);
+      virtual rt::Variant get(int id) const;
 
       virtual bool set(int id, const rt::Variant &value);
 
       virtual void select();
 
       virtual void deselect();
+
+      virtual std::string raw() const;
 
       virtual int process(const rt::ByteBuffer &request, rt::ByteBuffer &response);
 };

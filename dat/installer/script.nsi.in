@@ -7,7 +7,7 @@
 ; Installer definition
 ;--------------------------------
 Name "hce-lab"
-OutFile "@CMAKE_CURRENT_SOURCE_DIR@\hce-lab-@hce-lab_VERSION@-x86_64-installer.exe"
+OutFile "@CMAKE_SOURCE_DIR@\hce-lab-@hce-lab_VERSION@-x86_64-installer.exe"
 
 ; Install in user local profile (no admin rights required)
 InstallDir "$LOCALAPPDATA\josevcm\hce-lab"
@@ -16,7 +16,7 @@ InstallDir "$LOCALAPPDATA\josevcm\hce-lab"
 RequestExecutionLevel user
 
 ; Installer icon (optional)
-Icon "@CMAKE_CURRENT_BINARY_DIR@\installer\meta\resources\hce-lab.ico"
+Icon "@CMAKE_BINARY_DIR@\installer\meta\resources\hce-lab.ico"
 
 ;--------------------------------
 ; Variables
@@ -28,7 +28,7 @@ Var ICON_PATH
 ;--------------------------------
 ; Installer pages
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "@CMAKE_CURRENT_SOURCE_DIR@\LICENSE"
+!insertmacro MUI_PAGE_LICENSE "@CMAKE_SOURCE_DIR@\LICENSE"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -52,10 +52,10 @@ Section "Install hce-lab"
   SetOutPath "$INSTDIR"
 
   ; Copy executable and all required DLLs\plugins
-  File /r "@CMAKE_CURRENT_BINARY_DIR@\installer\data\*.*"
+  File /r "@CMAKE_BINARY_DIR@\installer\data\*.*"
 
   ; Define icon path after files are copied
-  StrCpy $ICON_PATH "@CMAKE_CURRENT_BINARY_DIR@\installer\meta\resources\hce-lab.ico"
+  StrCpy $ICON_PATH "@CMAKE_BINARY_DIR@\installer\meta\resources\hce-lab.ico"
 
   ; Create Start Menu folder
   CreateDirectory "$SMPROGRAMS\hce-lab"

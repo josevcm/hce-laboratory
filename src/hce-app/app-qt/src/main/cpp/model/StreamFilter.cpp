@@ -143,6 +143,8 @@ StreamFilter::StreamFilter(QObject *parent) : QSortFilterProxyModel(parent), imp
 {
 }
 
+StreamFilter::~StreamFilter() = default;
+
 QVariant StreamFilter::headerData(int section, Qt::Orientation orientation, int role) const
 {
    if (role != Qt::UserRole + 1)

@@ -21,24 +21,28 @@
 
 #include <cmath>
 #include <chrono>
+#include <fstream>
 
 #include <hw/ic/PN7160.h>
 
 #include <hce/Frame.h>
 
 #include <hce/targets/T4T.h>
+#include <hce/targets/Desfire.h>
 
 #include <hce/tasks/TargetListenerTask.h>
 
 #include "AbstractTask.h"
 
+using json = nlohmann::json;
+
 namespace hce::tasks {
 
 struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
 {
-   int listenerStatus = 0;
-
    hw::PN7160 pn7160;
+
+   int listenerStatus = Absent;
 
    std::shared_ptr<Target> target;
 
@@ -109,7 +113,7 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
    void refresh()
    {
       // try to open...
-      if (pn7160.open())
+      if (pn7160.open() == hw::PN7160::RESULT_OK)
       {
          log->info("device PN7160 open success!");
 
@@ -129,25 +133,48 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
    {
       log->info("starting discovery");
 
-      target = std::make_shared<targets::T4T>();
+      if (!pn7160)
+      {
+         log->warn("start discovery failed, device not ready!");
+         return;
+      }
 
-      const auto atqa = target->get<unsigned short>(Target::PARAM_ATQA);
+      if (auto data = command.get<std::string>("data"))
+      {
+         if (auto config = json::parse(data.value()); config.contains("fileName"))
+         {
+            std::string path = config["fileName"];
+
+            if (std::ifstream file(path); file.is_open())
+            {
+               log->info("load tag from: {}", {path});
+
+               std::stringstream buffer;
+
+               buffer << file.rdbuf();
+
+               target = std::make_shared<targets::Desfire>(buffer.str());
+            }
+         }
+      }
+
+      if (!target)
+         target = std::make_shared<targets::Desfire>();
+
+      const auto atq = target->get<unsigned short>(Target::PARAM_ATQA);
       const auto sak = target->get<unsigned char>(Target::PARAM_SAK);
       const auto tb1 = target->get<unsigned char>(Target::PARAM_RATS_TB1);
       const auto tc1 = target->get<unsigned char>(Target::PARAM_RATS_TC1);
-      const auto uid = target->get<rt::Buffer<unsigned char>>(Target::PARAM_UID);
-      const auto hist = target->get<rt::Buffer<unsigned char>>(Target::PARAM_RATS_HB);
-
-      const rt::ByteBuffer sn(uid.ptr(), uid.size());
-      const rt::ByteBuffer hb(hist.ptr(), hist.size());
+      const auto uid = target->get<rt::ByteBuffer>(Target::PARAM_UID);
+      const auto hb = target->get<rt::ByteBuffer>(Target::PARAM_RATS_HB);
 
       parameters = {
 
          // Listen Mode – NFC-A Discovery Parameters
-         {hw::PN7160::PARAM_LA_BIT_FRAME_SDD, {static_cast<unsigned char>(atqa >> 8)}}, // first byte of ATQA
-         {hw::PN7160::PARAM_LA_PLATFORM_CONFIG, {static_cast<unsigned char>(atqa & 0xff)}}, // second byte of ATQA
+         {hw::PN7160::PARAM_LA_BIT_FRAME_SDD, {static_cast<unsigned char>(atq >> 8)}}, // first byte of ATQA
+         {hw::PN7160::PARAM_LA_PLATFORM_CONFIG, {static_cast<unsigned char>(atq & 0xff)}}, // second byte of ATQA
          {hw::PN7160::PARAM_LA_SEL_INFO, {sak}}, // SAK
-         {hw::PN7160::PARAM_LA_NFCID1, sn}, // UID
+         {hw::PN7160::PARAM_LA_NFCID1, uid}, // UID
 
          // Listen Mode – ISO-DEP Discovery Parameters
          {hw::PN7160::PARAM_LI_A_BIT_RATE, {0x00}}, // only 106Kbps
@@ -161,9 +188,10 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
       };
 
       // starting discovery
-      if (!pn7160.startDiscovery(parameters, hw::PN7160::DISCOVERY_LISTEN))
+      if (pn7160.startDiscovery(parameters, hw::PN7160::DISCOVERY_LISTEN) != hw::PN7160::RESULT_OK)
       {
          log->warn("start discovery failed");
+         pn7160.close();
          return;
       }
 
@@ -174,9 +202,17 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
    {
       log->info("stop discovery");
 
-      if (pn7160)
+      if (!pn7160)
       {
-         pn7160.stopDiscovery();
+         log->warn("stop discovery failed, device not ready!");
+         return;
+      }
+
+      if (pn7160.stopDiscovery() != hw::PN7160::RESULT_OK)
+      {
+         log->warn("stop discovery failed");
+         pn7160.close();
+         return;
       }
 
       updateListenerStatus(Idle);
@@ -186,7 +222,7 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
    {
       if (auto data = command.get<std::string>("data"))
       {
-         auto config = json::parse(data.value());
+         const auto config = json::parse(data.value());
 
          log->debug("change config: {}", {config.dump()});
 
@@ -204,18 +240,21 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
 
    void process()
    {
-      if (listenerStatus != Listening)
-         return;
-
       rt::ByteBuffer request(256);
       rt::ByteBuffer response(256);
 
-      while (const int event = pn7160.waitEvent(request, 500))
+      int event = 0;
+
+      while ((event = pn7160.waitEvent(request, 100)) >= hw::PN7160::RESULT_OK)
       {
          Frame requestFrame(NfcATech, NfcRequestFrame, request, timeMs());
 
+         // ignore events if listening is not enabled...
+         if (listenerStatus != Listening)
+            continue;
+
          // process received event
-         if (event == hw::PN7160::EVENT_DATA)
+         if (event == hw::PN7160::RESULT_OK_EVENT_DATA)
          {
             // prepare response frame
             Frame responseFrame;
@@ -231,7 +270,7 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
                   responseFrame = Frame(NfcATech, NfcResponseFrame, response, timeMs() + 1);
 
                   // send response to reader
-                  if (!pn7160.sendData(response))
+                  if (pn7160.sendData(response) != hw::PN7160::RESULT_OK)
                   {
                      log->warn("failed to send response to reader");
                   }
@@ -248,7 +287,7 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
             if (responseFrame)
                listenerFrameStream->next(responseFrame);
          }
-         else if (event == hw::PN7160::EVENT_ACTIVATED)
+         else if (event == hw::PN7160::RESULT_OK_EVENT_ACTIVATED)
          {
             if (target)
                target->select();
@@ -256,10 +295,16 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
             Frame activateFrame(NfcATech, NfcActivateFrame, request, timeMs());
             listenerFrameStream->next(activateFrame);
          }
-         else if (event == hw::PN7160::EVENT_DEACTIVATED)
+         else if (event == hw::PN7160::RESULT_OK_EVENT_DEACTIVATED)
          {
             if (target)
+            {
                target->deselect();
+
+               std::string raw = target->raw();
+
+               log->info("target raw: {}", {raw});
+            }
 
             Frame deactivateFrame(NfcATech, NfcDeactivateFrame, request, timeMs());
             listenerFrameStream->next(deactivateFrame);
@@ -267,6 +312,12 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
 
          // reset buffer for next read
          request.clear();
+      }
+
+      if (event != hw::PN7160::RESULT_TIMEOUT)
+      {
+         log->warn("device error, may be disconnected?");
+         pn7160.close();
       }
    }
 
@@ -280,8 +331,15 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
          data["status"] = "idle";
       else if (status == Listening)
          data["status"] = "listening";
-      else
+      else if (status == Disabled)
          data["status"] = "disabled";
+      else
+         data["status"] = "absent";
+
+      if (pn7160)
+      {
+         data["name"] = "PN7160";
+      }
 
       updateStatus(status, data);
    }

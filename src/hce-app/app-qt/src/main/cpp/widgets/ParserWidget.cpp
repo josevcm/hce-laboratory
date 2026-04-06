@@ -36,6 +36,8 @@ ParserWidget::ParserWidget(QWidget *parent) : QTreeView(parent), impl(new Impl(t
    setItemDelegate(new ParserDelegate(this));
 }
 
+ParserWidget::~ParserWidget() = default;
+
 void ParserWidget::scrollTo(const QModelIndex &index, ScrollHint hint)
 {
    // avoid horizontal scroll jump to last column when click table

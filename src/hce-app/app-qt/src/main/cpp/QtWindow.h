@@ -24,7 +24,6 @@
 
 #include <QMainWindow>
 #include <QSettings>
-#include <QSharedPointer>
 
 class QtCache;
 
@@ -32,11 +31,11 @@ class QtWindow : public QMainWindow
 {
       Q_OBJECT
 
-      struct Impl;
-
    public:
 
       explicit QtWindow();
+
+      ~QtWindow() override;
 
       void handleEvent(QEvent *event);
 
@@ -78,7 +77,8 @@ class QtWindow : public QMainWindow
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
 
 #endif /* MAINWINDOW_H */

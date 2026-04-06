@@ -40,10 +40,13 @@ set(SOURCES
         src/main/cpp/model/ParserModel.cpp
         src/main/cpp/model/StreamFilter.cpp
         src/main/cpp/model/StreamModel.cpp
+        src/main/cpp/model/TargetModel.cpp
         src/main/cpp/protocol/ProtocolFrame.cpp
         src/main/cpp/protocol/ProtocolParser.cpp
         src/main/cpp/styles/IconStyle.cpp
         src/main/cpp/styles/Theme.cpp
+        src/main/cpp/target/TargetItem.cpp
+        src/main/cpp/widgets/ExplorerWidget.cpp
         src/main/cpp/widgets/HexViewWidget.cpp
         src/main/cpp/widgets/IconDelegate.cpp
         src/main/cpp/widgets/ParserDelegate.cpp
@@ -52,7 +55,6 @@ set(SOURCES
         src/main/cpp/widgets/StreamHeader.cpp
         src/main/cpp/widgets/StreamMenu.cpp
         src/main/cpp/widgets/StreamWidget.cpp
-        src/main/cpp/3party/customplot/QCustomPlot.cpp
         src/main/assets/theme/dark/icons/icons.qrc
         src/main/assets/theme/dark/style/style.qrc
         src/main/assets/theme/light/icons/icons.qrc

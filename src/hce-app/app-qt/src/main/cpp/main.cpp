@@ -75,12 +75,12 @@ int startApp(int argc, char *argv[])
 {
    const rt::Logger *log = rt::Logger::getLogger("app.main");
 
-   rt::Logger::setLoggerLevel("app.*", rt::Logger::DEBUG_LEVEL);
-   rt::Logger::setLoggerLevel("qt.*", rt::Logger::DEBUG_LEVEL);
-   rt::Logger::setLoggerLevel("hw.*", rt::Logger::WARN_LEVEL);
-   rt::Logger::setLoggerLevel("hce.desfire.*", rt::Logger::DEBUG_LEVEL);
-   rt::Logger::setLoggerLevel("worker.*", rt::Logger::INFO_LEVEL);
-   rt::Logger::setLoggerLevel("rt.*", rt::Logger::INFO_LEVEL);
+   rt::Logger::setLoggerLevel("app", rt::Logger::DEBUG_LEVEL);
+   rt::Logger::setLoggerLevel("qt", rt::Logger::DEBUG_LEVEL);
+   rt::Logger::setLoggerLevel("hw", rt::Logger::INFO_LEVEL);
+   rt::Logger::setLoggerLevel("hce", rt::Logger::DEBUG_LEVEL);
+   rt::Logger::setLoggerLevel("worker", rt::Logger::INFO_LEVEL);
+   rt::Logger::setLoggerLevel("rt", rt::Logger::INFO_LEVEL);
 
    // initialize application
    QtApplication::setApplicationName(HCE_LAB_APPLICATION_NAME);

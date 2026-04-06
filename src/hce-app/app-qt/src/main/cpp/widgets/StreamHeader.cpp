@@ -100,6 +100,8 @@ StreamHeader::StreamHeader(StreamWidget *parent) : QHeaderView(Qt::Horizontal, p
    setObjectName("StreamHeader");
 }
 
+StreamHeader::~StreamHeader() = default;
+
 void StreamHeader::setSortingEnabled(int section, bool enable)
 {
    impl->sortingEnabledMap[section] = enable;

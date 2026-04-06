@@ -45,3 +45,5 @@ struct ConfigDialog::Impl
 ConfigDialog::ConfigDialog(QWidget *parent) : QDialog(parent), impl(new Impl(this))
 {
 }
+
+ConfigDialog::~ConfigDialog() = default;

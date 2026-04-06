@@ -155,6 +155,106 @@ struct ListenRouting
    rt::ByteBuffer value;
 };
 
+std::string paramName(unsigned int paramId)
+{
+   static std::map<int, std::string> paramNames = {
+      // Common Discovery Parameters
+      {PN7160::PARAM_TOTAL_DURATION, "PARAM_TOTAL_DURATION"},
+      {PN7160::PARAM_CON_DISCOVERY_PARAM, "PARAM_CON_DISCOVERY_PARAM"},
+      {PN7160::PARAM_POWER_STATE, "PARAM_POWER_STATE"},
+
+      // Poll Mode – NFC-A Discovery Parameters
+      {PN7160::PARAM_PA_BAIL_OUT, "PARAM_PA_BAIL_OUT"},
+      {PN7160::PARAM_PA_DEVICES_LIMIT, "PARAM_PA_DEVICES_LIMIT"},
+
+      // Poll Mode – NFC-B Discovery Parameters
+      {PN7160::PARAM_PB_AFI, "PARAM_PB_AFI"},
+      {PN7160::PARAM_PB_BAIL_OUT, "PARAM_PB_BAIL_OUT"},
+      {PN7160::PARAM_PB_ATTRIB_PARAM1, "PARAM_PB_ATTRIB_PARAM1"},
+      {PN7160::PARAM_PB_SENSB_REQ_PARAM, "PARAM_PB_SENSB_REQ_PARAM"},
+      {PN7160::PARAM_PB_DEVICES_LIMIT, "PARAM_PB_DEVICES_LIMIT"},
+
+      // Poll Mode – NFC-F Discovery Parameters
+      {PN7160::PARAM_PF_BIT_RATE, "PARAM_PF_BIT_RATE"},
+      {PN7160::PARAM_PF_BAIL_OUT, "PARAM_PF_BAIL_OUT"},
+      {PN7160::PARAM_PF_DEVICES_LIMIT, "PARAM_PF_DEVICES_LIMIT"},
+
+      // Poll Mode – ISO-DEP Discovery Parameters
+      {PN7160::PARAM_PI_B_H_INFO, "PARAM_PI_B_H_INFO"},
+      {PN7160::PARAM_PI_BIT_RATE, "PARAM_PI_BIT_RATE"},
+
+      // Poll Mode – NFC-DEP Discovery Parameters
+      {PN7160::PARAM_PN_NFC_DEP_PSL, "PARAM_PN_NFC_DEP_PSL"},
+      {PN7160::PARAM_PN_ATR_REQ_GEN_BYTES, "PARAM_PN_ATR_REQ_GEN_BYTES"},
+      {PN7160::PARAM_PN_ATR_REQ_CONFIG, "PARAM_PN_ATR_REQ_CONFIG"},
+
+      // Poll Mode – NFC-V Discovery Parameters
+      {PN7160::PARAM_PV_DEVICES_LIMIT, "PARAM_PV_DEVICES_LIMIT"},
+
+      // Listen Mode – NFC-A Discovery Parameters
+      {PN7160::PARAM_LA_BIT_FRAME_SDD, "PARAM_LA_BIT_FRAME_SDD"},
+      {PN7160::PARAM_LA_PLATFORM_CONFIG, "PARAM_LA_PLATFORM_CONFIG"},
+      {PN7160::PARAM_LA_SEL_INFO, "PARAM_LA_SEL_INFO"},
+      {PN7160::PARAM_LA_NFCID1, "PARAM_LA_NFCID1"},
+
+      // Listen Mode – NFC-B Discovery Parameters
+      {PN7160::PARAM_LB_SENSB_INFO, "PARAM_LB_SENSB_INFO"},
+      {PN7160::PARAM_LB_NFCID0, "PARAM_LB_NFCID0"},
+      {PN7160::PARAM_LB_APPLICATION_DATA, "PARAM_LB_APPLICATION_DATA"},
+      {PN7160::PARAM_LB_SFGI, "PARAM_LB_SFGI"},
+      {PN7160::PARAM_LB_FWI_ADC_FO, "PARAM_LB_FWI_ADC_FO"},
+      {PN7160::PARAM_LB_BIT_RATE, "PARAM_LB_BIT_RATE"},
+
+      // Listen Mode – T3T Discovery Parameters
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_1, "PARAM_LF_T3T_IDENTIFIERS_1"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_2, "PARAM_LF_T3T_IDENTIFIERS_2"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_3, "PARAM_LF_T3T_IDENTIFIERS_3"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_4, "PARAM_LF_T3T_IDENTIFIERS_4"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_5, "PARAM_LF_T3T_IDENTIFIERS_5"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_6, "PARAM_LF_T3T_IDENTIFIERS_6"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_7, "PARAM_LF_T3T_IDENTIFIERS_7"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_8, "PARAM_LF_T3T_IDENTIFIERS_8"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_9, "PARAM_LF_T3T_IDENTIFIERS_9"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_10, "PARAM_LF_T3T_IDENTIFIERS_10"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_11, "PARAM_LF_T3T_IDENTIFIERS_11"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_12, "PARAM_LF_T3T_IDENTIFIERS_12"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_13, "PARAM_LF_T3T_IDENTIFIERS_13"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_14, "PARAM_LF_T3T_IDENTIFIERS_14"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_15, "PARAM_LF_T3T_IDENTIFIERS_15"},
+      {PN7160::PARAM_LF_T3T_IDENTIFIERS_16, "PARAM_LF_T3T_IDENTIFIERS_16"},
+      {PN7160::PARAM_LF_T3T_MAX, "PARAM_LF_T3T_MAX"},
+      {PN7160::PARAM_LF_T3T_FLAGS, "PARAM_LF_T3T_FLAGS"},
+      {PN7160::PARAM_LF_T3T_RD_ALLOWED, "PARAM_LF_T3T_RD_ALLOWED"},
+
+      // Listen Mode – NFC-F Discovery Parameters
+      {PN7160::PARAM_LF_PROTOCOL_TYPE, "PARAM_LF_PROTOCOL_TYPE"},
+
+      // Listen Mode – ISO-DEP Discovery Parameters
+      {PN7160::PARAM_LI_A_RATS_TB1, "PARAM_LI_A_RATS_TB1"},
+      {PN7160::PARAM_LI_A_HIST_BY, "PARAM_LI_A_HIST_BY"},
+      {PN7160::PARAM_LI_B_H_INFO_RESP, "PARAM_LI_B_H_INFO_RESP"},
+      {PN7160::PARAM_LI_A_BIT_RATE, "PARAM_LI_A_BIT_RATE"},
+      {PN7160::PARAM_LI_A_RATS_TC1, "PARAM_LI_A_RATS_TC1"},
+
+      // Listen Mode – NFC-DEP Discovery Parameters
+      {PN7160::PARAM_LN_WT, "PARAM_LN_WT"},
+      {PN7160::PARAM_LN_ATR_RES_GEN_BYTES, "PARAM_LN_ATR_RES_GEN_BYTES"},
+      {PN7160::PARAM_LN_ATR_RES_CONFIG, "PARAM_LN_ATR_RES_CONFIG"},
+
+      // Active Poll Mode Parameters
+      {PN7160::PARAM_PACM_BIT_RATE, "PARAM_PACM_BIT_RATE"},
+
+      // Other Parameters
+      {PN7160::PARAM_RF_FIELD_INFO, "PARAM_RF_FIELD_INFO"},
+      {PN7160::PARAM_RF_NFCEE_ACTION, "PARAM_RF_NFCEE_ACTION"}
+   };
+
+   if (const auto param = paramNames.find(paramId); param != paramNames.end())
+      return param->second;
+
+   return "<UNKNOWN>";
+}
+
 struct PN7160::Impl
 {
    rt::Logger *log = rt::Logger::getLogger("hw.PN7160");
@@ -257,14 +357,14 @@ struct PN7160::Impl
    /*
     * open communication context and initialize device
     */
-   bool open(const std::string &config)
+   int open(const std::string &config)
    {
       close();
 
-      if (!mpsse.open(protocol == SPI ? MPSSE::SPI0 : MPSSE::I2C, protocol == SPI ? MPSSE::CLK_1MHZ : MPSSE::CLK_100KHZ))
+      if (mpsse.open(protocol == SPI ? MPSSE::SPI0 : MPSSE::I2C, protocol == SPI ? MPSSE::CLK_1MHZ : MPSSE::CLK_100KHZ) != MPSSE::RESULT_OK)
       {
-         log->error("open failed: {}", {mpsse.errorString()});
-         return false;
+         LOG_DEBUG(log, "open failed: {}", {mpsse.errorString()});
+         return RESULT_ERROR;
       }
 
       LOG_INFO(log, "{} initialized at {}Hz ({})", {mpsse.deviceName(), mpsse.getClock(), (protocol == SPI ? "SPI" : "I2C")});
@@ -281,46 +381,48 @@ struct PN7160::Impl
       mpsse.setGpio(PN7160_FT232H_VEN_PIN, 1);
       usleep(PN7160_T_BOOT);
 
+      int res = RESULT_OK;
+
       // execute initialization sequence
       while (true)
       {
-         if (!coreReset(true))
+         if (res = coreReset(true); res != RESULT_OK)
          {
             log->error("core reset failed");
             break;
          }
 
-         if (!nciSetConfig(NXP_CONF_CORE))
+         if (res = nciSetConfig(NXP_CONF_CORE); res != RESULT_OK)
          {
             log->error("set NXP_CONF_CORE parameters failed");
-            return false;
+            break;
          }
 
-         if (!nciSetConfig(NXP_CONF_CORE_EXT))
+         if (res = nciSetConfig(NXP_CONF_CORE_EXT); res != RESULT_OK)
          {
             log->error("set NXP_CONF_CORE_EXT parameters failed");
-            return false;
+            break;
          }
 
-         if (!nciSetConfig(NXP_CONF_TVDD))
+         if (res = nciSetConfig(NXP_CONF_TVDD); res != RESULT_OK)
          {
             log->error("set NXP_CONF_TVDD parameters failed");
-            return false;
+            break;
          }
 
-         if (!nciSetConfig(NXP_CONF_RF))
+         if (res = nciSetConfig(NXP_CONF_RF); res != RESULT_OK)
          {
             log->error("set NXP_CONF_RF parameters failed");
-            return false;
+            break;
          }
 
-         if (!coreReset(false))
+         if (res = coreReset(false); res != RESULT_OK)
          {
             log->error("core reset failed");
             break;
          }
 
-         if (!nciSetPowerMode(POWER_MODE_FULL))
+         if (res = nciSetPowerMode(POWER_MODE_FULL); res != RESULT_OK)
          {
             log->error("set power mode failed");
             break;
@@ -331,13 +433,13 @@ struct PN7160::Impl
          device = mpsse.deviceName();
          status = STATUS_OPENED;
 
-         return true;
+         return RESULT_OK;
       }
 
       // at this point someone has fail...
       mpsse.close();
 
-      return false;
+      return res;
    }
 
    /*
@@ -346,25 +448,25 @@ struct PN7160::Impl
    void close()
    {
       mpsse.close();
-      device = mpsse.deviceName();
+      device = {};
       status = STATUS_CLOSED;
    }
 
    /*
     * enables discovery in LISTEN mode (CE-MODE)
     */
-   bool startDiscoveryModeListen(const std::vector<Parameter> &parameters)
+   int startDiscoveryListen(const std::vector<Parameter> &parameters)
    {
-      log->info("start discovery in listen mode");
+      LOG_INFO(log, "start discovery in listen mode");
 
       /*
        * step 1, send CORE_SET_CONF_CMD
        */
       // set configuration
-      if (!setParameters(parameters))
+      if (const int res = setParameters(parameters); res != RESULT_OK)
       {
          log->error("set core parameters failed");
-         return false;
+         return res;
       }
 
       /*
@@ -375,7 +477,7 @@ struct PN7160::Impl
       });
 
       // set discovery map
-      if (!nciRfDiscoveryMap(discoveryMaps))
+      if (const int res = nciRfDiscoveryMap(discoveryMaps); res != RESULT_OK)
       {
          log->error("set rf discovery map failed");
          return false;
@@ -390,7 +492,7 @@ struct PN7160::Impl
       });
 
       // set listen mode routing
-      if (!nciRfListenRouting(listenRoutings))
+      if (const int res = nciRfListenRouting(listenRoutings); res != RESULT_OK)
       {
          log->error("set listen routing failed");
          return false;
@@ -404,7 +506,7 @@ struct PN7160::Impl
       });
 
       // enable RF discovery listen
-      if (!nciRfDiscoveryStart(discoveryModes))
+      if (const int res = nciRfDiscoveryStart(discoveryModes); res != RESULT_OK)
       {
          log->error("set core parameters failed");
          return false;
@@ -413,13 +515,13 @@ struct PN7160::Impl
       // update status
       status = STATUS_LISTENING;
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * enables discovery in POLL mode
     */
-   bool startDiscoveryModePoll(const std::vector<Parameter> &parameters)
+   int startDiscoveryPoll(const std::vector<Parameter> &parameters)
    {
       LOG_INFO(log, "start discovery in poll mode");
 
@@ -427,10 +529,10 @@ struct PN7160::Impl
        * step 1, send CORE_SET_CONFIG_CMD
        */
       // set configuration
-      if (!setParameters(parameters))
+      if (const int res = setParameters(parameters); res != RESULT_OK)
       {
          log->error("set core parameters failed");
-         return false;
+         return res;
       }
 
       /*
@@ -441,10 +543,10 @@ struct PN7160::Impl
       });
 
       // set discovery map
-      if (!nciRfDiscoveryMap(discoveryMaps))
+      if (const int res = nciRfDiscoveryMap(discoveryMaps); res != RESULT_OK)
       {
          log->error("set rf discovery map failed");
-         return false;
+         return res;
       }
 
       /*
@@ -455,33 +557,33 @@ struct PN7160::Impl
       });
 
       // enable RF discovery listen
-      if (!nciRfDiscoveryStart(discoveryModes))
+      if (const int res = nciRfDiscoveryStart(discoveryModes); res != RESULT_OK)
       {
          log->error("discovery start failed");
-         return false;
+         return res;
       }
 
       // update status
       status = STATUS_POLLING;
 
-      return true;
+      return RESULT_OK;
    }
 
-   bool stopDiscoveryMode()
+   int stopDiscovery()
    {
       LOG_INFO(log, "stop discovery mode");
 
       // enable RF discovery listen
-      if (!nciRfDiscoveryStop())
+      if (const int res = nciRfDiscoveryStop(); res != RESULT_OK)
       {
          log->error("discovery stop failed");
-         return false;
+         return res;
       }
 
       // update status
       status = STATUS_OPENED;
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
@@ -494,8 +596,8 @@ struct PN7160::Impl
       rt::ByteBuffer event(256);
 
       // read next message
-      if (!nciRecv(event, timeout))
-         return EVENT_TIMEOUT;
+      if (const int res = nciRecv(event, timeout); res != RESULT_OK)
+         return res;
 
       const int mt = event.get() & 0xEF;
       const int op = event.get() & 0x3F;
@@ -511,7 +613,7 @@ struct PN7160::Impl
       switch (mt)
       {
          case NCI_MT_DATA:
-            return EVENT_DATA;
+            return RESULT_OK_EVENT_DATA;
 
          case NCI_MT_EVENT_CORE:
          {
@@ -527,10 +629,10 @@ struct PN7160::Impl
                   LOG_DEBUG(log, "   credits:0x{02x}", {payload.get()});
                }
 
-               return EVENT_CREDITS;
+               return RESULT_OK_EVENT_CREDITS;
             }
 
-            return EVENT_UNKNOW;
+            return RESULT_OK_EVENT_UNKNOWN;
          }
 
          case NCI_MT_EVENT_RF:
@@ -559,46 +661,47 @@ struct PN7160::Impl
                if (l > 0)
                   LOG_DEBUG(log, "   RF activation params:{x}", {payload.getBuffer(l)});
 
-               return EVENT_ACTIVATED;
+               return RESULT_OK_EVENT_ACTIVATED;
             }
 
             if (op == NCI_OP_RF_DEACTIVATE_NTF)
             {
                LOG_DEBUG(log, "notify RF_DEACTIVATE_NTF, type {} reason {}", {payload.get(), payload.get()});
-               return EVENT_DEACTIVATED;
+               return RESULT_OK_EVENT_DEACTIVATED;
             }
 
             if (op == NCI_OP_RF_FIELD_INFO_NTF)
             {
                LOG_DEBUG(log, "notify RF_FIELD_INFO_NTF, RF {}", {payload.get() ? "ON" : "OFF"});
-               return EVENT_FIELD_INFO;
+               return RESULT_OK_EVENT_FIELD;
             }
 
-            return EVENT_UNKNOW;
+            return RESULT_OK_EVENT_UNKNOWN;
          }
 
          default:
-            return EVENT_UNKNOW;
+            return RESULT_OK_EVENT_UNKNOWN;
       }
    }
 
    /*
     * Wait to receive data message, skip other events
     */
-   bool recvData(rt::ByteBuffer &data, const int timeout) const
+   int recvData(rt::ByteBuffer &data, const int timeout) const
    {
       LOG_DEBUG(log, "recv data, timeout: {}ms", {timeout});
 
+      int res;
       int remaining = timeout;
 
       // take start time
       const auto startTime = std::chrono::steady_clock::now();
 
       // while until data has received, filtering out all other messages
-      while (const int event = waitEvent(data, remaining))
+      while ((res = waitEvent(data, remaining)) > RESULT_OK)
       {
-         if (event == EVENT_DATA)
-            return true;
+         if (res == RESULT_OK_EVENT_DATA)
+            return RESULT_OK;
 
          // clear buffer for next fetch
          data.clear();
@@ -609,20 +712,20 @@ struct PN7160::Impl
 
          // check if has remaining time
          if (!remaining)
-            return false;
+            return RESULT_TIMEOUT;
 
          // finally update timeout and exit if expired...
          if (remaining = timeout - static_cast<int>((std::chrono::steady_clock::now() - startTime).count()); remaining <= 0)
-            return false;
+            return RESULT_TIMEOUT;
       }
 
-      return false;
+      return res;
    }
 
    /*
     * Send data
     */
-   bool sendData(const rt::ByteBuffer &data) const
+   int sendData(const rt::ByteBuffer &data) const
    {
       LOG_DEBUG(log, "send data: {x}", {data});
 
@@ -632,50 +735,50 @@ struct PN7160::Impl
       cmd.put(NCI_DATA_CMD).put(data.elements()).put(data).flip();
 
       // send control command
-      if (!nciSend(cmd))
+      if (const int res = nciSend(cmd); res != RESULT_OK)
       {
          log->error("nci data send error");
-         return false;
+         return res;
       }
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * perform reset procedure of PN7160
     */
-   bool coreReset(const bool resetConfig) const
+   int coreReset(const bool resetConfig) const
    {
       LOG_INFO(log, "perform core reset, keep config:{}", {resetConfig ? "NO" : "YES"});
 
       // reset to apply configuration
-      if (!nciCoreReset(resetConfig))
+      if (const int res = nciCoreReset(resetConfig); res != RESULT_OK)
       {
          log->error("core reset failed");
-         return false;
+         return res;
       }
 
       // init to apply configuration
-      if (!nciCoreInit())
+      if (const int res = nciCoreInit(); res != RESULT_OK)
       {
          log->error("core init failed");
-         return false;
+         return res;
       }
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * get parameters values
     */
-   bool getParameters(std::vector<Parameter> &parameters) const
+   int getParameters(std::vector<Parameter> &parameters) const
    {
       LOG_INFO(log, "get core parameters");
 
       if (parameters.empty())
       {
-         LOG_DEBUG(log, "not parameters to get!");
-         return true;
+         LOG_INFO(log, "not parameters to get!");
+         return RESULT_OK;
       }
 
       // build parameters payload
@@ -704,8 +807,8 @@ struct PN7160::Impl
       cmd.put(NCI_CORE_GET_CONF_CMD).put(payload.elements()).put(payload).flip();
 
       // send control command
-      if (!nciControl(cmd, rsp))
-         return false;
+      if (const int res = nciControl(cmd, rsp); res != RESULT_OK)
+         return res;
 
       rsp.skip(4);
 
@@ -738,23 +841,23 @@ struct PN7160::Impl
          else
             parameters.push_back({tag, value});
 
-         LOG_DEBUG(log, "   [{02x}]: {x}", {tag, value});
+         LOG_INFO(log, "   [{02x}/{}]: {x}", {tag, paramName(tag), value});
       }
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * set parameters values
     */
-   bool setParameters(const std::vector<Parameter> &parameters) const
+   int setParameters(const std::vector<Parameter> &parameters) const
    {
       LOG_INFO(log, "send core parameters");
 
       if (parameters.empty())
       {
-         LOG_DEBUG(log, "not parameters to set!");
-         return true;
+         LOG_INFO(log, "not parameters to set!");
+         return RESULT_OK;
       }
 
       // build parameters payload
@@ -762,12 +865,12 @@ struct PN7160::Impl
 
       for (const auto &[tag, value]: parameters)
       {
-         LOG_DEBUG(log, "   [{02x}]: {x}", {tag, value});
+         LOG_INFO(log, "   [{02x}/{}]: {x}", {tag, paramName(tag), value});
 
          if (value.isEmpty())
          {
-            log->error("empty parameter [{02x}]", {tag});
-            return false;
+            log->error("empty parameter [{02x}/{}]", {tag, paramName(tag)});
+            return RESULT_ERROR;
          }
 
          rt::ByteBuffer entry(255);
@@ -779,7 +882,7 @@ struct PN7160::Impl
             entry.putInt(tag, 1);
 
          // add tag length and value
-         entry.putInt(value.elements(), 1).put(value).flip();
+         entry.putInt(value.remaining(), 1).put(value).flip();
 
          // add to parameter list
          list.push_back(entry);
@@ -820,7 +923,7 @@ struct PN7160::Impl
    /*
     * NCI_CORE_RESET_CMD command
     */
-   bool nciCoreReset(bool resetConfig) const
+   int nciCoreReset(bool resetConfig) const
    {
       LOG_DEBUG(log, "send NCI_CORE_RESET_CMD, resetConfig: {}", {resetConfig});
 
@@ -830,19 +933,19 @@ struct PN7160::Impl
       // prepare NCI_CORE_RESET_CMD
       cmd.put(NCI_CORE_RESET_CMD).put(0x01).put(resetConfig ? 1 : 0).flip();
 
-      if (!nciControl(cmd, rsp))
+      if (const int res = nciControl(cmd, rsp); res != RESULT_OK)
       {
          log->error("send NCI_CORE_RESET_CMD failed");
-         return false;
+         return res;
       }
 
       rsp.clear();
 
       // read NCI_CORE_RESET_NFT
-      if (!nciRecv(rsp, 1000))
+      if (const int res = nciRecv(rsp, 1000); res != RESULT_OK)
       {
          log->error("read NCI_CORE_RESET_NTF failed");
-         return false;
+         return res;
       }
 
       // skip header
@@ -869,13 +972,13 @@ struct PN7160::Impl
          LOG_DEBUG(log, "   firmware version: {}.{}", {flashMajorVersion, flashMinorVersion});
       }
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * NCI_CORE_INIT_CMD command
     */
-   bool nciCoreInit() const
+   int nciCoreInit() const
    {
       LOG_DEBUG(log, "send NCI_CORE_INIT_CMD");
 
@@ -884,10 +987,10 @@ struct PN7160::Impl
 
       cmd.put(NCI_CORE_INIT_CMD).put(0x02).put({0x00, 0x00}).flip();
 
-      if (!nciControl(cmd, rsp))
+      if (const int res = nciControl(cmd, rsp); res != RESULT_OK)
       {
          log->error("send NCI_CORE_INIT_CMD failed");
-         return false;
+         return res;
       }
 
       // skip header
@@ -911,20 +1014,20 @@ struct PN7160::Impl
          }
       }
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * NCI_CORE_SET_CONF_CMD command
     */
-   bool nciSetConfig(const std::vector<rt::ByteBuffer> &parameters) const
+   int nciSetConfig(const std::vector<rt::ByteBuffer> &parameters) const
    {
       LOG_DEBUG(log, "send NCI_CORE_SET_CONF_CMD");
 
       if (parameters.empty())
       {
          LOG_DEBUG(log, "not parameters to set!");
-         return true;
+         return RESULT_OK;
       }
 
       rt::ByteBuffer cmd(256);
@@ -942,16 +1045,16 @@ struct PN7160::Impl
       cmd.put(NCI_CORE_SET_CONF_CMD).put(data.elements()).put(data).flip();
 
       // send control command
-      if (!nciControl(cmd, rsp))
-         return false;
+      if (const int res = nciControl(cmd, rsp); res != RESULT_OK)
+         return res;
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * NCI_CORE_SET_POWER_MODE_CMD command
     */
-   bool nciSetPowerMode(unsigned int mode) const
+   int nciSetPowerMode(unsigned int mode) const
    {
       LOG_DEBUG(log, "send NCI_CORE_SET_POWER_MODE_CMD");
 
@@ -964,16 +1067,16 @@ struct PN7160::Impl
       cmd.put(NCI_CORE_SET_POWER_MODE_CMD).put(payload.elements()).put(payload).flip();
 
       // send control command
-      if (!nciControl(cmd, rsp))
-         return false;
+      if (const int res = nciControl(cmd, rsp); res != RESULT_OK)
+         return res;
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * NCI_RF_DISCOVER_CMD command
     */
-   bool nciRfDiscoveryStart(const std::vector<DiscoveryMode> &discoveryModes)
+   int nciRfDiscoveryStart(const std::vector<DiscoveryMode> &discoveryModes)
    {
       LOG_DEBUG(log, "send NCI_RF_DISCOVER_CMD");
 
@@ -999,16 +1102,16 @@ struct PN7160::Impl
       cmd.put(NCI_RF_DISCOVER_CMD).put(payload.elements()).put(payload).flip();
 
       // send control command
-      if (!nciControl(cmd, rsp))
-         return false;
+      if (const int res = nciControl(cmd, rsp); res != RESULT_OK)
+         return res;
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * NCI_RF_DEACTIVATE_CMD command
     */
-   bool nciRfDiscoveryStop()
+   int nciRfDiscoveryStop()
    {
       LOG_DEBUG(log, "send NCI_RF_DEACTIVATE_CMD");
 
@@ -1019,16 +1122,16 @@ struct PN7160::Impl
       cmd.put(NCI_RF_DEACTIVATE_CMD).put(0x01).put(0x00).flip();
 
       // send control command
-      if (!nciControl(cmd, rsp))
-         return false;
+      if (const int res = nciControl(cmd, rsp); res != RESULT_OK)
+         return res;
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * NCI_RF_DISCOVER_MAP_CMD command
     */
-   bool nciRfDiscoveryMap(const std::vector<DiscoveryMap> &discoveryMaps) const
+   int nciRfDiscoveryMap(const std::vector<DiscoveryMap> &discoveryMaps) const
    {
       LOG_DEBUG(log, "send NCI_RF_DISCOVER_MAP_CMD");
 
@@ -1038,10 +1141,10 @@ struct PN7160::Impl
       // number of maps
       payload.put(discoveryMaps.size());
 
-      for (const auto &[protocol, mode, interface]: discoveryMaps)
+      for (const auto &[proto, mode, interface]: discoveryMaps)
       {
-         LOG_DEBUG(log, "   map proto:0x{02x}, mode:0x{02x}, interface:0x{02x}", {protocol, mode, interface});
-         payload.put(protocol).put(mode).put(interface);
+         LOG_DEBUG(log, "   map proto:0x{02x}, mode:0x{02x}, interface:0x{02x}", {proto, mode, interface});
+         payload.put(proto).put(mode).put(interface);
       }
 
       payload.flip();
@@ -1053,16 +1156,16 @@ struct PN7160::Impl
       cmd.put(NCI_RF_DISCOVER_MAP_CMD).put(payload.elements()).put(payload).flip();
 
       // send control command
-      if (!nciControl(cmd, rsp))
-         return false;
+      if (const int res = nciControl(cmd, rsp); res != RESULT_OK)
+         return res;
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * NCI_RF_SET_LISTEN_MODE_ROUTING_CMD command
     */
-   bool nciRfListenRouting(const std::vector<ListenRouting> &listenRoutings) const
+   int nciRfListenRouting(const std::vector<ListenRouting> &listenRoutings) const
    {
       LOG_DEBUG(log, "send NCI_RF_SET_LISTEN_MODE_ROUTING_CMD");
 
@@ -1090,45 +1193,45 @@ struct PN7160::Impl
       cmd.put(NCI_RF_SET_LISTEN_MODE_ROUTING_CMD).put(payload.elements()).put(payload).flip();
 
       // send control command
-      if (!nciControl(cmd, rsp))
-         return false;
+      if (const int res = nciControl(cmd, rsp); res != RESULT_OK)
+         return res;
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * NCI send control command
     */
-   bool nciControl(const rt::ByteBuffer &cmd, rt::ByteBuffer &rsp) const
+   int nciControl(const rt::ByteBuffer &cmd, rt::ByteBuffer &rsp) const
    {
       // send control command
-      if (!nciSend(cmd))
+      if (const int res = nciSend(cmd); res != RESULT_OK)
       {
          log->error("nci control send error");
-         return false;
+         return res;
       }
 
       // read control response
-      if (!nciRecv(rsp, PN7160_DEFAULT_TIMEOUT))
+      if (const int res = nciRecv(rsp, PN7160_DEFAULT_TIMEOUT); res != RESULT_OK)
       {
          log->error("nci control recv error");
-         return false;
+         return res;
       }
 
       // check response status
       if (rsp[3] != NCI_STATUS_OK)
       {
          log->error("nci control recv status:0x{02}", {rsp[3]});
-         return false;
+         return RESULT_ERROR;
       }
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * NCI generic send command
     */
-   bool nciSend(const rt::ByteBuffer &cmd) const
+   int nciSend(const rt::ByteBuffer &cmd) const
    {
       const unsigned char target = protocol == I2C ? static_cast<char>(i2cAddress << 1) : 0x00;
 
@@ -1140,10 +1243,10 @@ struct PN7160::Impl
       LOG_TRACE(log, "TX: {x}", {cmd});
 
       // set START condition
-      if (!mpsse.start())
+      if (mpsse.start() != MPSSE::RESULT_OK)
       {
          log->error("nciSend start failed: {}", {mpsse.errorString()});
-         return false;
+         return RESULT_ERROR;
       }
 
       {
@@ -1151,20 +1254,20 @@ struct PN7160::Impl
          rt::Finally stop([&] { mpsse.stop(); });
 
          // send data
-         if (!mpsse.write(buffer))
+         if (mpsse.write(buffer) != MPSSE::RESULT_OK)
          {
             log->error("nciSend data failed: {}", {mpsse.errorString()});
-            return false;
+            return RESULT_ERROR;
          }
       }
 
-      return true;
+      return RESULT_OK;
    }
 
    /*
     * NCI generic recv command
     */
-   bool nciRecv(rt::ByteBuffer &res, const int timeout) const
+   int nciRecv(rt::ByteBuffer &res, const int timeout) const
    {
       // for I2C mode send address, or 0xFF in SPI
       const unsigned char request = static_cast<char>(protocol == I2C ? (i2cAddress << 1) | 1 : 0xff);
@@ -1173,7 +1276,7 @@ struct PN7160::Impl
       if (res.capacity() < 3)
       {
          log->error("read data failed: buffer capacity {} is less than minimum 3", {res.capacity()});
-         return false;
+         return RESULT_ERROR;
       }
 
       // take start time
@@ -1181,75 +1284,81 @@ struct PN7160::Impl
 
       do
       {
-         if (hasMessage())
+         // wait until IRQ line goes up or error are triggered
+         if (const int r = hasMessage(); r != 1)
          {
-            // set START condition
-            if (!mpsse.start())
-            {
-               log->error("nciRecv start failed: {}", {mpsse.errorString()});
-               return false;
-            }
+            if (r < 0)
+               return RESULT_ERROR;
 
-            {
-               rt::ByteBuffer hdr(3);
-
-               // set STOP condition
-               rt::Finally stop([&] { mpsse.stop(); });
-
-               // send data request
-               if (!mpsse.write({request}))
-               {
-                  log->error("nciRecv target failed: {}", {mpsse.errorString()});
-                  return false;
-               }
-
-               // read NCI header
-               if (!mpsse.read(hdr))
-               {
-                  log->error("nciRecv read failed: {}", {mpsse.errorString()});
-                  return false;
-               }
-
-               // get response length
-               unsigned int length = hdr[2];
-
-               // check if response buffer has enough capacity
-               if (res.capacity() < length)
-               {
-                  log->error("nciRecv failed: buffer capacity {} is less than required {}", {res.capacity(), length});
-                  return false;
-               }
-
-               // data buffer to read
-               rt::ByteBuffer data(length);
-
-               // read data from bus
-               if (!mpsse.read(data))
-               {
-                  log->error("nciRecv read failed: {}", {mpsse.errorString()});
-                  return false;
-               }
-
-               // add data and commit output buffer
-               res.put(hdr).put(data).flip();
-            }
-
-            LOG_TRACE(log, "RX: {x}", {res});
-
-            return true;
+            continue;
          }
+
+         // set START condition
+         if (mpsse.start() != MPSSE::RESULT_OK)
+         {
+            log->error("nciRecv start failed: {}", {mpsse.errorString()});
+            return RESULT_ERROR;
+         }
+
+         {
+            rt::ByteBuffer hdr(3);
+
+            // set STOP condition
+            rt::Finally stop([&] { mpsse.stop(); });
+
+            // send data request
+            if (mpsse.write({request}) != MPSSE::RESULT_OK)
+            {
+               log->error("nciRecv target failed: {}", {mpsse.errorString()});
+               return RESULT_ERROR;
+            }
+
+            // read NCI header
+            if (mpsse.read(hdr) != MPSSE::RESULT_OK)
+            {
+               log->error("nciRecv read failed: {}", {mpsse.errorString()});
+               return RESULT_ERROR;
+            }
+
+            // get response length
+            unsigned int length = hdr[2];
+
+            // check if response buffer has enough capacity
+            if (res.capacity() < length)
+            {
+               log->error("nciRecv failed: buffer capacity {} is less than required {}", {res.capacity(), length});
+               return RESULT_ERROR;
+            }
+
+            // data buffer to read
+            rt::ByteBuffer data(length);
+
+            // read data from bus
+            if (mpsse.read(data) != MPSSE::RESULT_OK)
+            {
+               log->error("nciRecv read failed: {}", {mpsse.errorString()});
+               return RESULT_ERROR;
+            }
+
+            // add data and commit output buffer
+            res.put(hdr).put(data).flip();
+         }
+
+         LOG_TRACE(log, "RX: {x}", {res});
+
+         return RESULT_OK;
       }
       while (timeout < 0 || (std::chrono::steady_clock::now() - startTime) < std::chrono::milliseconds(timeout));
 
       LOG_TRACE(log, "RX: timeout!");
 
-      return false;
+      return RESULT_TIMEOUT;
    }
 
    /*
     * IRQ line poll to check if PN7160 has message
     */
-   bool hasMessage() const
+   int hasMessage() const
    {
       return mpsse.getGpio(PN7160_FT232H_IRQ_PIN);
    }
@@ -1279,23 +1388,23 @@ void PN7160::close()
    return impl->close();
 }
 
-bool PN7160::coreReset(bool resetConfig) const
+int PN7160::coreReset(bool resetConfig) const
 {
    return impl->coreReset(resetConfig);
 }
 
-bool PN7160::startDiscovery(const std::vector<Parameter> &parameters, const int mode) const
+int PN7160::startDiscovery(const std::vector<Parameter> &parameters, const int mode) const
 {
-   if (mode == DISCOVERY_LISTEN)
-      return impl->startDiscoveryModeListen(parameters);
-
    if (mode == DISCOVERY_POLL)
-      return impl->startDiscoveryModePoll(parameters);
+      return impl->startDiscoveryPoll(parameters);
+
+   if (mode == DISCOVERY_LISTEN)
+      return impl->startDiscoveryListen(parameters);
 
    return false;
 }
 
-bool PN7160::stopDiscovery() const
+int PN7160::stopDiscovery() const
 {
    return impl->nciRfDiscoveryStop();
 }
@@ -1305,12 +1414,12 @@ int PN7160::waitEvent(rt::ByteBuffer &data, const int timeout) const
    return impl->waitEvent(data, timeout);
 }
 
-bool PN7160::sendData(const rt::ByteBuffer &data) const
+int PN7160::sendData(const rt::ByteBuffer &data) const
 {
    return impl->sendData(data);
 }
 
-bool PN7160::recvData(rt::ByteBuffer &data, const int timeout) const
+int PN7160::recvData(rt::ByteBuffer &data, const int timeout) const
 {
    return impl->recvData(data, timeout);
 }

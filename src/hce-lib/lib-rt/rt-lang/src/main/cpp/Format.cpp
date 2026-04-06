@@ -129,7 +129,22 @@ std::string rt::Format::format(const std::string &fmt, const std::vector<Variant
 
          snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "}");
       }
-      else if (auto value = std::get_if<Buffer<unsigned char>>(&parameter))
+      else if (auto value = std::get_if<std::vector<std::string>>(&parameter))
+      {
+         // format as: 'str1', 'str2'
+         std::ostringstream oss;
+
+         for (int i = 0; i < value->size(); i++)
+         {
+            if (i > 0)
+               oss << ",";
+
+            oss << "'" << value->at(i) + "'";
+         }
+
+         snprintf(buffer, sizeof(buffer), "%s", oss.str().c_str());
+      }
+      else if (auto value = std::get_if<ByteBuffer>(&parameter))
       {
          int offset = 0;
 
@@ -173,7 +188,7 @@ std::string rt::Format::format(const std::string &fmt, const std::vector<Variant
          {
             // format as hex: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00...
             for (int i = 0; i < value->size(); ++i)
-               offset += snprintf(buffer + offset, sizeof(buffer) - offset, "%02X ", static_cast<unsigned int>(value->data()[i]));
+               offset += snprintf(buffer + offset, sizeof(buffer) - offset, "%02X", static_cast<unsigned int>(value->data()[i]));
 
             // remove spaces from right (trim)
             while (offset-- > 0 && buffer[offset] == ' ')
@@ -261,4 +276,31 @@ std::string rt::Format::rtrim(const std::string &str)
    std::string s = str;
    s.erase(s.find_last_not_of(ws) + 1);
    return s;
+}
+
+bool rt::Format::isHex(const std::string &str, const bool allowPrefix)
+{
+   if (str.empty())
+      return false;
+
+   std::size_t start = 0;
+
+   if (allowPrefix)
+   {
+      // allow prexis 0x or 0X
+      if (str.size() > 2 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
+         start = 2;
+
+      // but not only "0x"
+      if (start == str.size())
+         return false;
+   }
+
+   for (std::size_t i = start; i < str.size(); ++i)
+   {
+      if (!std::isxdigit(static_cast<unsigned char>(str[i])))
+         return false;
+   }
+
+   return true;
 }

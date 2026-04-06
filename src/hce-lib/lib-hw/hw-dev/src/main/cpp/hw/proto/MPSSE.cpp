@@ -172,17 +172,11 @@ struct MPSSE::Impl
 
    Impl()
    {
-      // ftdilib initialization
-      if (ftdi = ftdi_new(); ftdi == nullptr)
-         log->warn("error initializing FTDI");
    }
 
    ~Impl()
    {
       close();
-
-      if (ftdi)
-         ftdi_free(ftdi);
    }
 
    int open(const Protocol protocol, const unsigned int clock, const ByteOrder endianess)
@@ -214,47 +208,46 @@ struct MPSSE::Impl
 
       if (!profile)
       {
-         log->warn("no FTDI device found!");
-         return false;
+         LOG_DEBUG(log, "no FTDI device found!");
+         return RESULT_ERROR;
       }
 
       LOG_INFO(log, "open device {} {} on bus {03} device {03}", { descriptor.manufacturer, descriptor.product, descriptor.bus, descriptor.address});
 
-      int res = 0;
-
-      while (true)
+      // ftdilib initialization
+      while ((ftdi = ftdi_new()) != nullptr)
       {
          /* Set the read and write timeout periods */
          ftdi->usb_read_timeout = USB_TIMEOUT;
          ftdi->usb_write_timeout = USB_TIMEOUT;
 
          /* Set the FTDI interface  */
-         if (res = ftdi_set_interface(ftdi, INTERFACE_A); res != 0)
+         if (ftdi_set_interface(ftdi, INTERFACE_A) != 0)
             break;
 
          /* Open the specified device */
-         if (res = ftdi_usb_open_desc_index(ftdi, descriptor.vid, descriptor.pid, nullptr, nullptr, 0); res != 0)
+         if (ftdi_usb_open_desc_index(ftdi, descriptor.vid, descriptor.pid, nullptr, nullptr, 0) != 0)
             break;
 
-         if (res = ftdi_usb_reset(ftdi); res != 0)
+         if (ftdi_usb_reset(ftdi) != 0)
             break;
 
-         if (res = ftdi_set_latency_timer(ftdi, LATENCY_MS); res != 0)
+         if (ftdi_set_latency_timer(ftdi, LATENCY_MS) != 0)
             break;
 
-         if (res = ftdi_write_data_set_chunksize(ftdi, CHUNK_SIZE); res != 0)
+         if (ftdi_write_data_set_chunksize(ftdi, CHUNK_SIZE) != 0)
             break;
 
-         if (res = ftdi_read_data_set_chunksize(ftdi, CHUNK_SIZE); res != 0)
+         if (ftdi_read_data_set_chunksize(ftdi, CHUNK_SIZE) != 0)
             break;
 
-         if (res = ftdi_set_bitmode(ftdi, 0, BITMODE_MPSSE); res != 0)
+         if (ftdi_set_bitmode(ftdi, 0, BITMODE_MPSSE) != 0)
             break;
 
-         if (!setClock(clock))
+         if (setClock(clock) != RESULT_OK)
             break;
 
-         if (!setMode(protocol, endianess))
+         if (setMode(protocol, endianess) != RESULT_OK)
             break;
 
          /* Give the chip a few mS to initialize */
@@ -272,45 +265,44 @@ struct MPSSE::Impl
 
          LOG_INFO(log, "device {} ready!", { profile->description});
 
-         return true;
+         return RESULT_OK;
       }
+
+      close();
 
       log->warn("failed to open device: {}", {ftdiError()});
 
-      ftdi_deinit(ftdi);
-
-      profile = nullptr;
-
-      return false;
+      return RESULT_ERROR;
    }
 
    void close()
    {
-      if (profile)
-         ftdi_deinit(ftdi);
+      if (ftdi)
+         ftdi_free(ftdi);
 
+      ftdi = nullptr;
       profile = nullptr;
    }
 
    int start()
    {
       if (!profile)
-         return false;
+         return RESULT_ERROR;
 
       if (protocol == I2C && status == Started)
       {
          /* Set the default pin states while the clock is low since this is an I2C repeated start condition */
-         if (!ftdiGpioLow(mode.pidle & ~SK))
-            return false;
+         if (const int res = ftdiGpioLow(mode.pidle & ~SK); res != RESULT_OK)
+            return res;
 
          /* Make sure the pins are in their default idle state */
-         if (!ftdiGpioLow(mode.pidle))
-            return false;
+         if (const int res = ftdiGpioLow(mode.pidle); res != RESULT_OK)
+            return res;
       }
 
       /* Set the start condition */
-      if (!ftdiGpioLow(mode.pstart))
-         return false;
+      if (const int res = ftdiGpioLow(mode.pstart); res != RESULT_OK)
+         return res;
 
       /*
        * Hackish work around to properly support SPI mode 3.
@@ -319,8 +311,8 @@ struct MPSSE::Impl
        */
       if (protocol == SPI3)
       {
-         if (!ftdiGpioLow(mode.pstart & ~SK))
-            return false;
+         if (const int res = ftdiGpioLow(mode.pstart & ~SK); res != RESULT_OK)
+            return res;
       }
 
       /*
@@ -330,13 +322,13 @@ struct MPSSE::Impl
        */
       if (protocol == SPI1)
       {
-         if (!ftdiGpioLow(mode.pstart | SK))
-            return false;
+         if (const int res = ftdiGpioLow(mode.pstart | SK); res != RESULT_OK)
+            return res;
       }
 
       status = Started;
 
-      return true;
+      return RESULT_OK;
    }
 
    int stop()
@@ -344,34 +336,31 @@ struct MPSSE::Impl
       if (!profile)
          return false;
 
+      status = Stopped;
+
       /* In I2C mode, we need to ensure that the data line goes low while the clock line is low to avoid sending an inadvertent start condition */
       if (protocol == I2C)
       {
          /* Set the default pin states while the clock is low since this is an I2C repeated start condition */
-         if (!ftdiGpioLow(mode.pidle & ~DO & ~SK))
-            return false;
+         if (const int res = ftdiGpioLow(mode.pidle & ~DO & ~SK); res != RESULT_OK)
+            return res;
       }
 
       /* Send the stop condition */
-      if (!ftdiGpioLow(mode.pstop))
-         return false;
+      if (const int res = ftdiGpioLow(mode.pstop); res != RESULT_OK)
+         return res;
 
       /* Restore the pins to their idle states */
-      if (!ftdiGpioLow(mode.pidle))
-         return false;
+      if (const int res = ftdiGpioLow(mode.pidle); res != RESULT_OK)
+         return res;
 
-      status = Stopped;
-
-      return true;
-
+      return RESULT_OK;
    }
 
-   bool read(rt::ByteBuffer &data, const int timeout)
+   int read(rt::ByteBuffer &data, const int timeout)
    {
       if (!profile)
-         return false;
-
-      LOG_INFO(log, "read {} bytes", {data.remaining()});
+         return RESULT_ERROR;
 
       rt::ByteBuffer cmd(16);
 
@@ -396,17 +385,17 @@ struct MPSSE::Impl
          cmd.flip();
 
          // send read request!
-         if (!ftdiSend(cmd))
+         if (const int res = ftdiSend(cmd); res != RESULT_OK)
          {
             log->error("failed to send read request in I2C mode");
-            return false;
+            return res;
          }
 
          // and read data back
-         if (!ftdiRecv(data, timeout))
+         if (const int res = ftdiRecv(data, timeout); res != RESULT_OK)
          {
             log->error("failed to read data in I2C mode");
-            return false;
+            return res;
          }
       }
 
@@ -423,17 +412,17 @@ struct MPSSE::Impl
             cmd.flip();
 
             // send read request!
-            if (!ftdiSend(cmd))
+            if (const int res = ftdiSend(cmd); res != RESULT_OK)
             {
                log->error("failed to send read request in I2C mode");
-               return false;
+               return res;
             }
 
             // and read data back
-            if (!ftdiRecv(block, timeout))
+            if (const int res = ftdiRecv(block, timeout); res != RESULT_OK)
             {
                log->error("failed to read data in I2C mode");
-               return false;
+               return res;
             }
 
             // add block to data buffer
@@ -448,15 +437,13 @@ struct MPSSE::Impl
 
       LOG_DEBUG(log, "MPSSE RX: {x}", {data.copy()});
 
-      return true;
+      return RESULT_OK;
    }
 
-   bool write(const rt::ByteBuffer &data)
+   int write(const rt::ByteBuffer &data)
    {
       if (!profile)
          return false;
-
-      LOG_INFO(log, "write {} bytes", {data.remaining()});
 
       LOG_DEBUG(log, "MPSSE TX: {x}", {data.copy()});
 
@@ -487,24 +474,24 @@ struct MPSSE::Impl
             ack.clear();
 
             // send!
-            if (!ftdiSend(cmd))
+            if (const int res = ftdiSend(cmd); res != RESULT_OK)
             {
                log->error("failed to send write request in I2C mode");
-               return false;
+               return res;
             }
 
             // and read back ACK
-            if (!ftdiRecv(ack))
+            if (const int res = ftdiRecv(ack); res != RESULT_OK)
             {
                log->error("failed to read ACK in I2C mode");
-               return false;
+               return res;
             }
 
             // store ack
             mode.tack = ack.get();
          }
 
-         return true;
+         return RESULT_OK;
       }
 
       // SPI mode
@@ -523,20 +510,20 @@ struct MPSSE::Impl
          cmd.flip();
 
          // send!
-         if (!ftdiSend(cmd))
+         if (const int res = ftdiSend(cmd); res != RESULT_OK)
          {
             log->error("failed to write data in SPI mode");
-            return false;
+            return res;
          }
 
          // prepare for next block
          cmd.clear();
       }
 
-      return true;
+      return RESULT_OK;
    }
 
-   bool setClock(const unsigned int freq)
+   int setClock(const unsigned int freq)
    {
       LOG_INFO(log, "setClock, frequency {}Hz", {freq});
 
@@ -546,20 +533,20 @@ struct MPSSE::Impl
       rt::ByteBuffer cmd1(32);
       cmd1.put(freq > CLK_6MHZ ? CMD_TCK_X5 : CMD_TCK_D5).flip();
 
-      if (!ftdiSend(cmd1))
-         return false;
+      if (const int res = ftdiSend(cmd1); res != RESULT_OK)
+         return res;
 
       rt::ByteBuffer cmd2(32);
       cmd2.put(CMD_TCK_DIVISOR);
       cmd2.putInt(div, 2);
       cmd2.flip();
 
-      if (!ftdiSend(cmd2))
-         return false;
+      if (const int res = ftdiSend(cmd2); res != RESULT_OK)
+         return res;
 
       clock = sck / ((1 + div) * 2);
 
-      return true;
+      return RESULT_OK;
    }
 
    int setMode(const Protocol proto, const ByteOrder bo)
@@ -642,18 +629,18 @@ struct MPSSE::Impl
 
       cmd.flip();
 
-      if (!ftdiSend(cmd))
-         return false;
+      if (const int res = ftdiSend(cmd); res != RESULT_OK)
+         return res;
 
-      if (!ftdiGpioLow(mode.pidle))
-         return false;
+      if (const int res = ftdiGpioLow(mode.pidle); res != RESULT_OK)
+         return res;
 
-      if (!ftdiGpioHigh(mode.gpioh))
-         return false;
+      if (const int res = ftdiGpioHigh(mode.gpioh); res != RESULT_OK)
+         return res;
 
       protocol = proto;
 
-      return true;
+      return RESULT_OK;
    }
 
    /* get the GPIO pins high/low */
@@ -661,8 +648,8 @@ struct MPSSE::Impl
    {
       unsigned char states;
 
-      if (!ftdiReadPins(states))
-         return -1;
+      if (const int res = ftdiReadPins(states); res < 0)
+         return res;
 
       const int pin = gpio + GPIOH0;
 
@@ -670,7 +657,7 @@ struct MPSSE::Impl
    }
 
    /* set the GPIO pins high/low */
-   bool setGpio(const int gpio, const int value)
+   int setGpio(const int gpio, const int value)
    {
       // ADBUS GPIO
       if (gpio >= GPIOL0 && gpio <= GPIOL3 && status == Stopped)
@@ -706,15 +693,15 @@ struct MPSSE::Impl
          return ftdiGpioHigh(mode.gpioh);
       }
 
-      return false;
+      return RESULT_ERROR;
    }
 
    int ftdiReadPins(unsigned char &val) const
    {
-      if (ftdi_read_pins(ftdi, &val) < 0)
-         return false;
+      if (ftdi_read_pins(ftdi, &val) != 0)
+         return RESULT_ERROR;
 
-      return true;
+      return RESULT_OK;
    }
 
    int ftdiGpioLow(const int value) const
@@ -738,17 +725,17 @@ struct MPSSE::Impl
       return ftdiSend(cmd);
    }
 
-   bool ftdiSend(const rt::ByteBuffer &data) const
+   int ftdiSend(const rt::ByteBuffer &data) const
    {
       LOG_DEBUG(log, "FTDI TX: {x}", {data.copy()});
 
-      if (const auto res = ftdi_write_data(ftdi, data.ptr(), static_cast<int>(data.remaining())); res != data.remaining())
-         return false;
+      if (const int res = ftdi_write_data(ftdi, data.ptr(), static_cast<int>(data.remaining())); res != data.remaining())
+         return RESULT_ERROR;
 
-      return true;
+      return RESULT_OK;
    }
 
-   bool ftdiRecv(rt::ByteBuffer &data, const int timeout = -1) const
+   int ftdiRecv(rt::ByteBuffer &data, const int timeout = -1) const
    {
       int r = 0;
 
@@ -763,7 +750,7 @@ struct MPSSE::Impl
       {
          // read next data block
          if (r = ftdi_read_data(ftdi, data.ptr(), static_cast<int>(data.remaining())); r < 0)
-            return false;
+            return r == -7 ? RESULT_TIMEOUT : RESULT_ERROR;
 
          data.skip(r);
       }
@@ -772,7 +759,7 @@ struct MPSSE::Impl
 
       LOG_DEBUG(log, "FTDI RX: {x}", {data.copy()});
 
-      return true;
+      return RESULT_OK;
    }
 
    std::string deviceName() const
@@ -800,7 +787,7 @@ MPSSE::MPSSE() : impl(std::make_shared<Impl>())
 {
 }
 
-bool MPSSE::open(const Protocol protocol, const unsigned int clock, ByteOrder endianess)
+int MPSSE::open(const Protocol protocol, const unsigned int clock, ByteOrder endianess)
 {
    return impl->open(protocol, clock, endianess);
 }
@@ -810,27 +797,27 @@ void MPSSE::close()
    return impl->close();
 }
 
-bool MPSSE::start() const
+int MPSSE::start() const
 {
    return impl->start();
 }
 
-bool MPSSE::stop() const
+int MPSSE::stop() const
 {
    return impl->stop();
 }
 
-bool MPSSE::read(rt::ByteBuffer &data, int timeout) const
+int MPSSE::read(rt::ByteBuffer &data, int timeout) const
 {
    return impl->read(data, timeout);
 }
 
-bool MPSSE::write(const rt::ByteBuffer &data) const
+int MPSSE::write(const rt::ByteBuffer &data) const
 {
    return impl->write(data);
 }
 
-bool MPSSE::queue(std::function<void(Queue *ops)> &batch) const
+int MPSSE::queue(std::function<void(Queue *ops)> &batch) const
 {
    return false;
 }
@@ -840,7 +827,7 @@ int MPSSE::getGpio(const GPIO gpio) const
    return impl->getGpio(gpio);
 }
 
-bool MPSSE::setGpio(const GPIO gpio, const int value) const
+int MPSSE::setGpio(const GPIO gpio, const int value) const
 {
    return impl->setGpio(gpio, value);
 }
@@ -850,7 +837,7 @@ int MPSSE::getClock() const
    return impl->clock;
 }
 
-bool MPSSE::setClock(unsigned int clock) const
+int MPSSE::setClock(unsigned int clock) const
 {
    return impl->setClock(clock);
 }

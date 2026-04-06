@@ -16,4 +16,4 @@ add_library(hce-core STATIC
 target_include_directories(hce-core PUBLIC ${PUBLIC_INCLUDE_DIR})
 target_include_directories(hce-core PRIVATE ${PRIVATE_SOURCE_DIR})
 
-target_link_libraries(hce-core rt-lang cppdes microaes)
+target_link_libraries(hce-core rt-lang cppdes microaes nlohmann)

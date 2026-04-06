@@ -28,8 +28,6 @@ class StreamWidget : public QTableView
 {
       Q_OBJECT
 
-      struct Impl;
-
    public:
 
       enum Type
@@ -40,6 +38,8 @@ class StreamWidget : public QTableView
    public:
 
       explicit StreamWidget(QWidget *parent = nullptr);
+
+      ~StreamWidget() override;
 
       void select(double from, double to);
 
@@ -59,7 +59,8 @@ class StreamWidget : public QTableView
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
 
 #endif

@@ -38,9 +38,10 @@
 #include <events/ListenerFrameEvent.h>
 #include <events/ListenerStatusEvent.h>
 
+#include <model/ParserModel.h>
 #include <model/StreamFilter.h>
 #include <model/StreamModel.h>
-#include <model/ParserModel.h>
+#include <model/TargetModel.h>
 
 #include <styles/Theme.h>
 
@@ -66,6 +67,10 @@ struct QtWindow::Impl
    bool followEnabled = false;
    bool filterEnabled = false;
 
+   // detected devices
+   QStringList enabledDevices;
+   QStringList disabledDevices;
+
    // interface
    QSharedPointer<Ui_QtWindow> ui;
 
@@ -74,11 +79,16 @@ struct QtWindow::Impl
 
    // last decoder status received
    QString targetListenerStatus = ListenerStatusEvent::Disabled;
+   QString targetListenerName;
+   bool targetListenerEnabled = false;
+
+   // Target view model
+   QPointer<TargetModel> targetModel;
 
    // Frame view model
    QPointer<StreamModel> streamModel;
 
-   // Frame view model
+   // Parser view model
    QPointer<ParserModel> parserModel;
 
    // Frame filter
@@ -97,11 +107,11 @@ struct QtWindow::Impl
 
    explicit Impl(QtWindow *window) : window(window),
                                      ui(new Ui_QtWindow()),
+                                     targetModel(new TargetModel()),
                                      streamModel(new StreamModel()),
                                      parserModel(new ParserModel()),
                                      streamFilter(new StreamFilter()),
                                      refreshTimer(new QTimer())
-
    {
    }
 
@@ -131,13 +141,22 @@ struct QtWindow::Impl
       // setup filter
       streamFilter->setSourceModel(streamModel);
 
-      // setup display stretch
+      // setup workbench stretch
       ui->workbench->setStretchFactor(0, 3);
       ui->workbench->setStretchFactor(1, 2);
+
+      // setup navigation stretch
+      ui->navigation->setStretchFactor(0, 0);
+      ui->navigation->setStretchFactor(1, 1);
 
       // setup display stretch
       ui->decoding->setStretchFactor(0, 3);
       ui->decoding->setStretchFactor(1, 2);
+
+      // setup target view model
+      ui->targetTree->setModel(targetModel);
+      ui->targetTree->setColumnWidth(TargetModel::Name, 250);
+      ui->targetTree->setColumnWidth(TargetModel::Type, 150);
 
       // setup frame view model
       ui->decodeView->setModel(streamFilter);
@@ -248,6 +267,9 @@ struct QtWindow::Impl
    {
       bool updated = false;
 
+      if (event->hasName())
+         updated |= updateTargetListenerName(event->name());
+
       if (event->hasStatus())
          updated |= updateTargetListenerStatus(event->status());
 
@@ -259,8 +281,8 @@ struct QtWindow::Impl
    }
 
    /*
- * logic status updates
- */
+    * listener status updates
+    */
    bool updateTargetListenerStatus(const QString &value)
    {
       if (targetListenerStatus == value)
@@ -270,7 +292,36 @@ struct QtWindow::Impl
 
       targetListenerStatus = value;
 
+      if (targetListenerEnabled = targetListenerStatus != ListenerStatusEvent::Absent; !targetListenerEnabled)
+      {
+         // clear device information
+         targetListenerName.clear();
+      }
+
+      updateDevices();
+
       return true;
+   }
+
+   bool updateTargetListenerName(const QString &value)
+   {
+      if (targetListenerName == value)
+         return false;
+
+      qInfo().noquote().nospace() << "target listener name changed from [" << targetListenerName << "] to [" << value << "]";
+
+      targetListenerName = value;
+
+      return true;
+   }
+
+   void updateDevices()
+   {
+      enabledDevices.clear();
+      disabledDevices.clear();
+
+      if (targetListenerEnabled)
+         enabledDevices << targetListenerName;
    }
 
    void setFollowEnabled(bool enabled)
@@ -316,6 +367,10 @@ struct QtWindow::Impl
 
    void updateStatus() const
    {
+      if (enabledDevices.isEmpty())
+         ui->statusBar->showMessage(tr("No devices available"));
+      else
+         ui->statusBar->showMessage(QString(tr("Detected %1").arg(enabledDevices.join(", "))));
    }
 
    /*
@@ -432,13 +487,18 @@ struct QtWindow::Impl
       // disable action to avoid multiple start
       ui->actionListen->setEnabled(false);
 
+      // clear previous data
+      clearView();
+
       // enable follow
       setFollowEnabled(true);
 
       // start listener
-      QtApplication::post(new ListenerControlEvent(ListenerControlEvent::Start));
+      // QtApplication::post(new ListenerControlEvent(ListenerControlEvent::Start));
 
-      clearView();
+      QtApplication::post(new ListenerControlEvent(ListenerControlEvent::Start, {
+                                                      {"fileName", "targets/desfire/desfire-factory.json"}
+                                                   }));
    }
 
    void toggleStop()
@@ -473,16 +533,53 @@ struct QtWindow::Impl
    void clearSelection() const
    {
       qInfo() << "clear selection";
+
+      // clear stream model selection
+      ui->decodeView->clearSelection();
    }
 
    void clearView()
    {
       qInfo() << "clear events and views";
+
+      // clear stream model
+      streamModel->resetModel();
+
+      // clear parser model
+      parserModel->resetModel();
+
+      // hide parser view
+      ui->parserWidget->hide();
    }
 
    void resetView() const
    {
       qInfo() << "reset view";
+
+      // reset columns width
+      ui->decodeView->setColumnWidth(StreamModel::Id, 50);
+      ui->decodeView->setColumnWidth(StreamModel::Time, 175);
+      ui->decodeView->setColumnWidth(StreamModel::Delta, 80);
+      ui->decodeView->setColumnWidth(StreamModel::Rate, 80);
+      ui->decodeView->setColumnWidth(StreamModel::Tech, 80);
+      ui->decodeView->setColumnWidth(StreamModel::Event, 100);
+      ui->decodeView->setColumnWidth(StreamModel::Flags, 80);
+
+      // initialize column display type
+      ui->decodeView->setColumnType(StreamModel::Id, StreamWidget::Integer);
+      ui->decodeView->setColumnType(StreamModel::Time, StreamWidget::DateTime);
+      ui->decodeView->setColumnType(StreamModel::Delta, StreamWidget::Elapsed);
+      ui->decodeView->setColumnType(StreamModel::Rate, StreamWidget::Rate);
+      ui->decodeView->setColumnType(StreamModel::Tech, StreamWidget::String);
+      ui->decodeView->setColumnType(StreamModel::Flags, StreamWidget::None);
+      ui->decodeView->setColumnType(StreamModel::Event, StreamWidget::String);
+      ui->decodeView->setColumnType(StreamModel::Data, StreamWidget::Hex);
+
+      // reset sort indicator to first column
+      ui->decodeView->horizontalHeader()->setSortIndicator(StreamModel::Id, Qt::AscendingOrder);
+
+      // clear all filters
+      ui->decodeView->clearFilters();
    }
 
    void readSettings()
@@ -565,6 +662,8 @@ QtWindow::QtWindow() : impl(new Impl(this))
    // update window size
    impl->readSettings();
 }
+
+QtWindow::~QtWindow() = default;
 
 void QtWindow::openFile()
 {

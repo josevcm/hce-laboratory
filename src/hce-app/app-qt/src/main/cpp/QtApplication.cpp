@@ -202,6 +202,8 @@ QtApplication::QtApplication(int &argc, char **argv) : QApplication(argc, argv),
    QTimer::singleShot(0, this, [=] { startup(); });
 }
 
+QtApplication::~QtApplication() = default;
+
 void QtApplication::startup()
 {
    impl->startup();

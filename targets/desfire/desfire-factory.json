@@ -1,0 +1,56 @@
+{
+  "discovery": {
+    "ATQA": 17411,
+    "ATS": {
+      "HB": "80",
+      "TB1": 129,
+      "TC1": 2
+    },
+    "SAK": 32,
+    "UID": "04010203040580"
+  },
+  "payload": {
+    "directory": [
+      {
+        "aid": 0,
+        "isoId": 16128,
+        "isoName": "D2760000850100",
+        "keySettings1": 15,
+        "keySettings2": 1,
+        "keys": [
+          {
+            "id": 0,
+            "type": 0,
+            "version": 0,
+            "value": "00000000000000000000000000000000"
+          }
+        ]
+      }
+    ],
+    "info": {
+      "hw": {
+        "protocol": 5,
+        "storage": 24,
+        "subtype": 1,
+        "type": 1,
+        "vendor": 4,
+        "version": 256
+      },
+      "sw": {
+        "protocol": 5,
+        "storage": 24,
+        "subtype": 1,
+        "type": 1,
+        "vendor": 4,
+        "version": 260
+      },
+      "tr": {
+        "batch": 690199491770,
+        "week": 8,
+        "year": 22
+      }
+    }
+  },
+  "type": "desfire",
+  "version": 1
+}

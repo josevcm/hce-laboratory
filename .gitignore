@@ -1,7 +1,9 @@
 .idea/
+.claude/
 /cmake-**/
 /bin/installer/
 /run/
 src/hce-app/app-qt/src/main/cpp/QtConfig.h
 /build
 /nfc-hce
+CLAUDE.md

@@ -98,7 +98,7 @@ struct T4T::Impl
          }
          case PARAM_UID:
          {
-            if (const auto v = std::get_if<rt::Buffer<unsigned char>>(&value))
+            if (const auto v = std::get_if<rt::ByteBuffer>(&value))
             {
                targetUID = rt::ByteBuffer(v->ptr(), v->size());
                return true;
@@ -131,7 +131,7 @@ struct T4T::Impl
          }
          case PARAM_RATS_HB:
          {
-            if (const auto v = std::get_if<rt::Buffer<unsigned char>>(&value))
+            if (const auto v = std::get_if<rt::ByteBuffer>(&value))
             {
                targetHB = rt::ByteBuffer(v->ptr(), v->size());
                return true;
@@ -166,7 +166,7 @@ T4T::T4T() : impl(std::make_unique<Impl>())
 {
 }
 
-rt::Variant T4T::get(const int id)
+rt::Variant T4T::get(const int id) const
 {
    return impl->getParam(id);
 }

@@ -113,6 +113,8 @@ StreamWidget::StreamWidget(QWidget *parent) : QTableView(parent), impl(new Impl(
    });
 }
 
+StreamWidget::~StreamWidget() = default;
+
 void StreamWidget::select(double from, double to)
 {
    impl->selectAndScroll(from, to);

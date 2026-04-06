@@ -28,13 +28,13 @@ class StreamWidget;
 
 class StreamHeader : public QHeaderView
 {
-   Q_OBJECT
-
-      struct Impl;
+      Q_OBJECT
 
    public:
 
       explicit StreamHeader(StreamWidget *parent = nullptr);
+
+      ~StreamHeader() override;
 
       void setSortingEnabled(int section, bool enabled);
 
@@ -46,8 +46,8 @@ class StreamHeader : public QHeaderView
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
-
 
 #endif

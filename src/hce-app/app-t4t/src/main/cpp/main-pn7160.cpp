@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     const rt::Logger* log = rt::Logger::getLogger("app.main");
 
-    unsigned char uid[7] = {0x04, 0x3b, 0x4f, 0x5A, 0x74, 0x43, 0x80};
+    const unsigned char uid[7] = {0x04, 0x3b, 0x4f, 0x5A, 0x74, 0x43, 0x80};
 
     hce::targets::Desfire card;
 

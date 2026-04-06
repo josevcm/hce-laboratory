@@ -39,6 +39,8 @@ class Format
       static std::string rtrim(const std::string &str);
 
       static std::string trim(const std::string &str);
+
+      static bool isHex(const std::string &str, bool allowPrefix = false);
 };
 
 }

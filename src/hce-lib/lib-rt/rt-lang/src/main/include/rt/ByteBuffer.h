@@ -22,6 +22,8 @@
 #ifndef RT_BYTEBUFFER_H
 #define RT_BYTEBUFFER_H
 
+#include <iomanip>
+#include <sstream>
 #include <random>
 
 #include <rt/Buffer.h>
@@ -81,7 +83,7 @@ class ByteBuffer : public Buffer<unsigned char>
                return true;
          }
 
-         return elements() < other.elements();
+         return remaining() < other.remaining();
       }
 
       ByteBuffer operator^(const ByteBuffer &other) const
@@ -384,12 +386,45 @@ class ByteBuffer : public Buffer<unsigned char>
          return output;
       }
 
+      static ByteBuffer fromHex(const std::string &hex)
+      {
+         if (hex.size() % 2 != 0)
+            throw std::invalid_argument("invalid hex string: '" + hex + "' length must be even");
+
+         if (!std::all_of(hex.begin(), hex.end(), [](const unsigned char c) { return std::isxdigit(c); }))
+            throw std::invalid_argument("invalid hex string: '" + hex + "'");
+
+         ByteBuffer buffer(hex.length() / 2);
+
+         for (unsigned int i = 0; i < hex.size(); i += 2)
+            buffer.put(static_cast<unsigned char>(std::stoi(hex.substr(i, 2), nullptr, 16)));
+
+         buffer.flip();
+
+         return buffer;
+      }
+
+      static std::string toHex(const ByteBuffer &input)
+      {
+         std::ostringstream oss;
+         oss << std::uppercase << std::hex << std::setfill('0');
+
+         for (unsigned int i = input.position(); i < input.limit(); ++i)
+            oss << std::setw(2) << static_cast<int>(input[i]);
+
+         return oss.str();
+      }
+
       static ByteBuffer random(const unsigned int size)
       {
          ByteBuffer buffer(size);
 
+         std::random_device rd;
+         std::mt19937 mt(rd());
+         std::uniform_real_distribution dist(0.0, 1.0);
+
          for (int i = 0; i < size; i++)
-            buffer.put(std::rand() % 256);
+            buffer.put(static_cast<unsigned char>(dist(mt) * 255));
 
          buffer.flip();
 

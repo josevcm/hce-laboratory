@@ -26,19 +26,19 @@
 
 class ConfigDialog : public QDialog
 {
-   Q_OBJECT
-
-      struct Impl;
+      Q_OBJECT
 
    public:
 
       explicit ConfigDialog(QWidget *parent = nullptr);
 
+      ~ConfigDialog() override;
+
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 
 };
-
 
 #endif //HCE_LAB_CONFIGDIALOG_H

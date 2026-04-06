@@ -100,6 +100,8 @@ StreamDelegate::StreamDelegate(StreamWidget *parent) : QStyledItemDelegate(paren
    setObjectName("StreamDelegate");
 }
 
+StreamDelegate::~StreamDelegate() = default;
+
 void StreamDelegate::setColumnType(int section, int format)
 {
    impl->columnType[section] = format;

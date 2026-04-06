@@ -34,7 +34,7 @@ class T4T final : public Target
 
       explicit T4T();
 
-      rt::Variant get(int id) override;
+      rt::Variant get(int id) const override;
 
       bool set(int id, const rt::Variant &value) override;
 

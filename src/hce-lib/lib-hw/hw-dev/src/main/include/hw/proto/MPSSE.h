@@ -86,6 +86,13 @@ class MPSSE
          WAIT_HIGH = 1
       };
 
+      enum Result
+      {
+         RESULT_OK = 0,
+         RESULT_ERROR = -1,
+         RESULT_TIMEOUT = -2
+      };
+
       class Queue
       {
          public:
@@ -105,27 +112,27 @@ class MPSSE
 
       MPSSE();
 
-      bool open(Protocol protocol, unsigned int clock = 100000, ByteOrder endianess = BYTEORDER_BIG_ENDIAN);
+      int open(Protocol protocol, unsigned int clock = 100000, ByteOrder endianess = BYTEORDER_BIG_ENDIAN);
 
       void close();
 
-      bool start() const;
+      int start() const;
 
-      bool stop() const;
+      int stop() const;
 
-      bool read(rt::ByteBuffer &data, int timeout = -1) const;
+      int read(rt::ByteBuffer &data, int timeout = -1) const;
 
-      bool write(const rt::ByteBuffer &data) const;
+      int write(const rt::ByteBuffer &data) const;
 
-      bool queue(std::function<void(Queue *ops)> &batch) const;
+      int queue(std::function<void(Queue *ops)> &batch) const;
 
       int getGpio(GPIO gpio) const;
 
-      bool setGpio(GPIO gpio, int value) const;
+      int setGpio(GPIO gpio, int value) const;
 
       int getClock() const;
 
-      bool setClock(unsigned int clock) const;
+      int setClock(unsigned int clock) const;
 
       std::string deviceName() const;
 
