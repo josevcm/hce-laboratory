@@ -6,7 +6,7 @@ A high-performance, low-latency implementation of the **ISO/IEC 14443-4 (ISO-DEP
 > This project is still in an early stage. I’m publishing it so it can be useful to those who are researching the PN7160 chip or HCE emulation.
 
 > [!TIP]
-> Currently, the emulation is operational and all APDUs are receiving a response from a fake T4T target with 0x6E00 to demonstrate successful configuration of the PN7160 and command processor.
+> Currently, the emulation is operational and all APDUs receive a response of 0x6E00 from a stub T4T target to demonstrate successful configuration of the PN7160 and command processor.
 
 > [!IMPORTANT]
 > I'm open to ideas, but please don't open issues. I know there's still a lot to do...
@@ -51,7 +51,7 @@ This screenshot shows ISO-DEP communication between a desktop reader running Win
 
 ## Supported Hardware
 
-This stack is designed to work with a high-performance hardware bridge to ensure minimal latency during ISO-DEP transactions, currently between 2.5ms a 4ms.
+This stack is designed to work with a high-performance hardware bridge to ensure minimal latency during ISO-DEP transactions, currently between 2.5ms and 4ms.
 
 ### 1. NFC Controller: NXP PN7160
 The **PN7160** is the core of the emulation engine. Unlike legacy controllers, it supports the latest NCI standards and offers superior stability for Card Emulation (CE) modes.
@@ -61,7 +61,7 @@ To interface the PN7160 with a PC, the project utilizes the **FT232H** in **SPI 
 * **Higher Throughput**: Essential for high-bitrate ISO-DEP frames.
 * **Lower Latency**: Critical for meeting the strict Frame Waiting Time (FWT) requirements of the ISO 14443-4 standard.
 
-For PN7160 I use the development board [OM27160B1](https://www.nxp.com/design/design-center/development-boards-and-designs/PN7160-EVK) with USB-SPI bridge [Adafruit FT232H Breakout](https://www.adafruit.com/product/2264) (or similar product).
+For the PN7160, I use the development board [OM27160B1](https://www.nxp.com/design/design-center/development-boards-and-designs/PN7160-EVK) with USB-SPI bridge [Adafruit FT232H Breakout](https://www.adafruit.com/product/2264) (or similar product).
 
 **OM27160B1HN Board (OM27160A1HN is I2C version)**
 
@@ -70,7 +70,7 @@ For PN7160 I use the development board [OM27160B1](https://www.nxp.com/design/de
 | J1 | PN7160 Signal                                             |
 |:---|:----------------------------------------------------------|
 | #1 | VDD(PAD): 1.8 V or 3.3 V host interface voltage reference |
-| #2 | VDD(PAD): VDD(UP/VBAT: 2.8 V to 5.5 V supply voltage      |
+| #2 | VDD(UP)/VBAT: 2.8 V to 5.5 V supply voltage               |
 
 | J2 | PN7160 Signal (only relevant for OM27160A1HN I2C version) |
 |:---|:----------------------------------------------------------|
@@ -90,8 +90,8 @@ For PN7160 I use the development board [OM27160B1](https://www.nxp.com/design/de
 |:----|:--------------------------------------------------------------|
 | #1  | SPI_COTI: SPI-bus Controller Output, Target Input data (MOSI) |
 | #2  | SPI_CITO: SPI-bus Controller Input, Target Output data (MISO) |
-| #3  | SPI_NSS: SPI-bus Target Select (SCK)                          |
-| #4  | SPI_SCK: SPI-bus Serial Clock (CS)                            |
+| #3  | SPI_NSS: SPI-bus Target Select (CS)                           |
+| #4  | SPI_SCK: SPI-bus Serial Clock (SCK)                           |
 | #5  | Not connected                      |
 | #6  | Not connected                                                 |
 
@@ -101,9 +101,9 @@ For PN7160 I use the development board [OM27160B1](https://www.nxp.com/design/de
 
 ## Hardware Connection Schema (SPI mode)
 
-To interface the OM2760B1HN with the Adafruit FT232H, follow this pin mapping. This configuration ensures proper power management and interrupt handling for real-time ISO-DEP emulation.
+To interface the OM27160B1HN with the Adafruit FT232H, follow this pin mapping. This configuration ensures proper power management and interrupt handling for real-time ISO-DEP emulation.
 
-| FT232H Pin | OM2760B1HN Pin  | 	Function           | 	Description                   |
+| FT232H Pin | OM27160B1HN Pin  | 	Function           | 	Description                   |
 |:-----------|:----------------|:--------------------|:----------------------------------|
 | D0         | J4/#4 - SCK     | Serial Clock        | SPI Clock Signal                  |
 | D1         | J4/#1 - MOSI    | Master Out Slave IN | Data from PC to PN7160            |
@@ -124,7 +124,7 @@ To interface the OM2760B1HN with the Adafruit FT232H, follow this pin mapping. T
 
 ![FT232H-OM27160B1HN.png](doc/screenshots/FT232H-OM27160B1HN.png)
 
-*Note: C1 PIN is connected only for mechanical stability, not used for anymore.*
+*Note: C1 PIN is connected only for mechanical stability, not used anymore.*
 
 ## Emulation Timings
 
@@ -136,13 +136,13 @@ This is the measure taken with my other application [nfc-laboratory](https://git
 
 ## Targets supported
 
-I am currently developing an advanced emulator that would be compatible with the Desfire protocol based on existing public documentation. However, it could be extended to any type of card or device that uses ISO-DEP as its transport layer, ISO14443-4.
+I am currently developing an advanced emulator compatible with the DESFire protocol based on existing public documentation. However, it could be extended to any type of card or device that uses ISO-DEP as its transport layer, ISO14443-4.
 
-This emulation allows you to freely set the values ​​of AQTA, SAK, and UID, making it an ideal tool for analyzing reader behavior without needing real cards.
+This emulation allows you to freely set the values of ATQA, SAK, and UID, making it an ideal tool for analyzing reader behavior without needing real cards.
 
 ### Links to public datasheets and online specs
 
-The following links are the original online resource links are archived here for documentation on how this emulation works:
+The following links to original online resources are archived here as reference for how this emulation works:
 
 * [ISO/IEC 7816-4 Standard](https://www.freecalypso.org/pub/GSM/ISO7816/ISO_7816-4_2005.pdf)
 * [DESFire EV0 Datasheet (M075031, April 2004)](https://web.archive.org/web/20170201031920/http://neteril.org/files/M075031_desfire.pdf)
@@ -159,11 +159,11 @@ For the USB-SPI adapter to work properly, it is necessary to configure the digit
 
 ![ft_ptog-installer1.png](doc/screenshots/ft_ptog-installer1.png)
 
-After installations is finished the utility and select **DEVICES->Scan and Parse** to detect FT232h chip and load current EEPROM values.
+Once installation is complete, open the utility and select **DEVICES → Scan and Parse** to detect the FT232H chip and load current EEPROM values.
 
 ![ft_prog-config1.png](doc/screenshots/ft_prog-config1.png)
 
-In **Hardware Specific->IO Controls** ensure that all ports are configured to **Trisate** as shown below:
+In **Hardware Specific → IO Controls**, ensure that all ports are configured to **Tristate** as shown below:
 
 ![ft_prog-config2.png](doc/screenshots/ft_prog-config2.png)
 
@@ -173,7 +173,7 @@ Select **Options->List All Devices** and find your adapter in device list, my bo
 
 ![zadig-config1.png](doc/screenshots/zadig-config1.png)
 
-Now, select target driver and press **Replace Driver**, (I recommend using **libusbK**), wait util the new driver is installed.
+Now, select the target driver and press **Replace Driver** (I recommend using **libusbK**), and wait until the new driver is installed.
 
 ![zadig-config2.png](doc/screenshots/zadig-config2.png)
 
@@ -192,11 +192,11 @@ Contains the following components:
 - /src/hce-lib/lib-hce: Host card emulation core, and targets implementation.
 - /src/hce-lib/lib-rt: Runtime utilities and thread management.
 
-All can be compiled with mingw-g64, a minimum version is required to support C++17, recommended 11.0 or higher.
+All can be compiled with mingw-w64; a minimum version supporting C++17 is required, 11.0 or higher recommended.
 
 ### Prerequisites
 
-- CMake version 3.16 or higher
+- CMake version 3.17 or higher
     - `winget install -e --id=Kitware.CMake`
     - alternative see http://www.cmake.org/cmake/resources/software.html
 - Git-bash or your preferred git client
@@ -269,7 +269,7 @@ cmake --build build --target hce-lab -- -j 6
 [100%] Built target hce-lab
 ```
 
-Create a coppy of the application for easier access:
+Create a copy of the application for easier access:
 
 ```
 cp .\build\src\hce-app\app-qt\hce-lab.exe hce-lab.exe
@@ -317,6 +317,10 @@ Launch the application:
 ## License
 
 This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)**. This ensures that the core protocol stack remains open-source and benefits the global security community.
+
+## Trademark Notice
+
+MIFARE and DESFire are registered trademarks of NXP Semiconductors. PN7160 and related product names are trademarks of NXP Semiconductors. This project is not affiliated with, endorsed by, or sponsored by NXP Semiconductors in any way.
 
 ---
 

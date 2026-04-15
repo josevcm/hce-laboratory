@@ -278,6 +278,8 @@ StreamModel::StreamModel(QObject *parent) : QAbstractTableModel(parent), impl(ne
 {
 }
 
+StreamModel::~StreamModel() = default;
+
 int StreamModel::rowCount(const QModelIndex &parent) const
 {
    return impl->frames.size();

@@ -28,13 +28,13 @@ class StreamWidget;
 
 class StreamDelegate : public QStyledItemDelegate
 {
-   Q_OBJECT
-
-      struct Impl;
+      Q_OBJECT
 
    public:
 
       explicit StreamDelegate(StreamWidget *parent = nullptr);
+
+      ~StreamDelegate() override;
 
       void setColumnType(int section, int format);
 
@@ -46,7 +46,8 @@ class StreamDelegate : public QStyledItemDelegate
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 
 };
 

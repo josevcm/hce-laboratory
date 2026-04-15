@@ -40,9 +40,7 @@ class Frame;
 
 class StreamModel : public QAbstractTableModel
 {
-   Q_OBJECT
-
-      struct Impl;
+      Q_OBJECT
 
    public:
 
@@ -59,6 +57,8 @@ class StreamModel : public QAbstractTableModel
    public:
 
       explicit StreamModel(QObject *parent = nullptr);
+
+      ~StreamModel() override;
 
       int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
@@ -94,7 +94,8 @@ class StreamModel : public QAbstractTableModel
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
 
 #endif

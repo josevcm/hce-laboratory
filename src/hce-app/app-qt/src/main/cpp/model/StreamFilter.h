@@ -31,9 +31,7 @@ class Frame;
 
 class StreamFilter : public QSortFilterProxyModel
 {
-   Q_OBJECT
-
-      struct Impl;
+      Q_OBJECT
 
    public:
 
@@ -51,6 +49,8 @@ class StreamFilter : public QSortFilterProxyModel
    public:
 
       explicit StreamFilter(QObject *parent = nullptr);
+
+      ~StreamFilter() override;
 
       QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
@@ -86,8 +86,8 @@ class StreamFilter : public QSortFilterProxyModel
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
-
 
 #endif

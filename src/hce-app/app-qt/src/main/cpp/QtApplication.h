@@ -31,11 +31,11 @@ class QtApplication : public QApplication
 {
       Q_OBJECT
 
-      struct Impl;
-
    public:
 
       QtApplication(int &argc, char **argv);
+
+      ~QtApplication() override;
 
       static void post(QEvent *event, int priority = Qt::NormalEventPriority);
 
@@ -59,7 +59,8 @@ class QtApplication : public QApplication
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
 
 #endif

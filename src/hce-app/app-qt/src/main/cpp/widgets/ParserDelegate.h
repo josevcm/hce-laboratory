@@ -30,8 +30,6 @@ class ParserModel;
 
 class ParserDelegate : public QStyledItemDelegate
 {
-      struct Impl;
-
    Q_OBJECT
 
    public:
@@ -48,7 +46,8 @@ class ParserDelegate : public QStyledItemDelegate
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
 
 

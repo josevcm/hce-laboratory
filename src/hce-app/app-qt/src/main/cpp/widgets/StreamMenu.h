@@ -31,17 +31,18 @@ class StreamMenu : public QMenu
 {
       Q_OBJECT
 
-      struct Impl;
-
    public:
 
       explicit StreamMenu(StreamFilter *filter, int section, StreamHeader *streamHeader);
+
+      ~StreamMenu() override;
 
       void exec(const QPoint &pos);
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
 
 #endif

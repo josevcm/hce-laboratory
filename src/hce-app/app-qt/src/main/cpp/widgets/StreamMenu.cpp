@@ -431,6 +431,8 @@ StreamMenu::StreamMenu(StreamFilter *filter, int section, StreamHeader *streamHe
 {
 }
 
+StreamMenu::~StreamMenu() = default;
+
 void StreamMenu::exec(const QPoint &pos)
 {
    QAction *action = QMenu::exec(pos);

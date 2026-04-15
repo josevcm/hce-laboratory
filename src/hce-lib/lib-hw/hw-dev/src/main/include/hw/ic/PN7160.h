@@ -50,17 +50,6 @@ class PN7160
          STATUS_POLLING = 4,
       };
 
-      enum Event
-      {
-         EVENT_UNKNOW = -1,
-         EVENT_TIMEOUT = 0,
-         EVENT_FIELD_INFO = 1,
-         EVENT_ACTIVATED = 2,
-         EVENT_DEACTIVATED = 3,
-         EVENT_CREDITS = 4,
-         EVENT_DATA = 5,
-      };
-
       enum Discovery
       {
          DISCOVERY_LISTEN = 0,
@@ -132,7 +121,7 @@ class PN7160
          PARAM_LF_T3T_IDENTIFIERS_13 = 0x4C,
          PARAM_LF_T3T_IDENTIFIERS_14 = 0x4D,
          PARAM_LF_T3T_IDENTIFIERS_15 = 0x4E,
-         PARAM_LF_T3T_IDENTIFIERS_16 = 0x4E,
+         PARAM_LF_T3T_IDENTIFIERS_16 = 0x4F,
          PARAM_LF_T3T_MAX = 0x52,
          PARAM_LF_T3T_FLAGS = 0x53,
          PARAM_LF_T3T_RD_ALLOWED = 0x55,
@@ -166,6 +155,19 @@ class PN7160
          rt::ByteBuffer value;
       };
 
+      enum Result
+      {
+         RESULT_OK = 0,
+         RESULT_OK_EVENT_DATA = 1,
+         RESULT_OK_EVENT_FIELD = 2,
+         RESULT_OK_EVENT_ACTIVATED = 3,
+         RESULT_OK_EVENT_DEACTIVATED = 4,
+         RESULT_OK_EVENT_CREDITS = 5,
+         RESULT_OK_EVENT_UNKNOWN = 6,
+         RESULT_ERROR = -1,
+         RESULT_TIMEOUT = -2,
+      };
+
    public:
 
       explicit PN7160(Protocol protocol, unsigned char addr = 0x28);
@@ -178,17 +180,17 @@ class PN7160
 
       void close();
 
-      bool coreReset(bool resetConfig = true) const;
+      int coreReset(bool resetConfig = true) const;
 
-      bool startDiscovery(const std::vector<Parameter> &parameters, int mode) const;
+      int startDiscovery(const std::vector<Parameter> &parameters, int mode) const;
 
-      bool stopDiscovery() const;
+      int stopDiscovery() const;
 
       int waitEvent(rt::ByteBuffer &data, int timeout = -1) const;
 
-      bool recvData(rt::ByteBuffer &data, int timeout = -1) const;
+      int recvData(rt::ByteBuffer &data, int timeout = -1) const;
 
-      bool sendData(const rt::ByteBuffer &data) const;
+      int sendData(const rt::ByteBuffer &data) const;
 
    private:
 

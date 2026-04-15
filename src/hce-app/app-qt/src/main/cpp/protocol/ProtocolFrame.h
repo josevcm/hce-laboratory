@@ -30,7 +30,7 @@
 
 class ProtocolFrame : public QObject
 {
-   struct Impl;
+      Q_OBJECT
 
    public:
 
@@ -131,8 +131,8 @@ class ProtocolFrame : public QObject
 
    private:
 
-      QSharedPointer<Impl> impl;
-
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
 
 #endif

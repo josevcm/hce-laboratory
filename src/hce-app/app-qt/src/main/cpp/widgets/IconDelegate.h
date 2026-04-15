@@ -29,7 +29,7 @@ class IconDelegate : public QStyledItemDelegate
 
    public:
 
-      IconDelegate(QObject *parent = nullptr);
+      explicit IconDelegate(QObject *parent = nullptr);
 
       void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override;
 };

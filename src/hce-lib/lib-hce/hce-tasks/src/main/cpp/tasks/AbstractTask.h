@@ -30,8 +30,6 @@
 
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
-
 namespace hce::tasks {
 
 struct AbstractTask
@@ -51,7 +49,7 @@ struct AbstractTask
    rt::BlockingQueue<rt::Event> commandQueue;
 
    // last status send
-   json lastStatus;
+   nlohmann::json lastStatus;
 
    AbstractTask(const std::string &name, const std::string &subject) : log(rt::Logger::getLogger(name))
    {
@@ -65,7 +63,7 @@ struct AbstractTask
       commandSubscription = commandSubject->subscribe([this](const rt::Event &command) { commandQueue.add(command); });
    }
 
-   void updateStatus(int code, const json &data)
+   void updateStatus(int code, const nlohmann::json &data)
    {
       if (data != lastStatus)
       {

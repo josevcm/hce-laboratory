@@ -228,6 +228,8 @@ HexViewWidget::HexViewWidget(QWidget *parent) : QAbstractScrollArea(parent), imp
    setMinimumWidth(impl->textCoord + impl->textWidth + 30);
 }
 
+HexViewWidget::~HexViewWidget() = default;
+
 void HexViewWidget::clear()
 {
    impl->reset({});

@@ -92,6 +92,8 @@ ParserModel::ParserModel(QObject *parent) : QAbstractItemModel(parent), impl(new
 {
 }
 
+ParserModel::~ParserModel() = default;
+
 QVariant ParserModel::data(const QModelIndex &index, int role) const
 {
    if (!index.isValid())

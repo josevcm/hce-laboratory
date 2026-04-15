@@ -46,6 +46,10 @@ class ListenerStatusEvent : public QEvent
 
       const QJsonObject &content() const;
 
+      bool hasName() const;
+
+      QString name() const;
+
       bool hasStatus() const;
 
       QString status() const;

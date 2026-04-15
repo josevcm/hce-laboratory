@@ -36,7 +36,7 @@ struct ProtocolFrame::Impl
    QVector<QVariant> data;
 
    // frame childs
-   QList<ProtocolFrame *> childs;
+   QList<ProtocolFrame *> children;
 
    //
    int start;
@@ -52,7 +52,7 @@ struct ProtocolFrame::Impl
 
    ~Impl()
    {
-      qDeleteAll(childs);
+      qDeleteAll(children);
    }
 };
 
@@ -72,14 +72,14 @@ ProtocolFrame::~ProtocolFrame()
 
 void ProtocolFrame::clearChilds()
 {
-   qDeleteAll(impl->childs);
-   impl->childs.clear();
+   qDeleteAll(impl->children);
+   impl->children.clear();
 }
 
 ProtocolFrame *ProtocolFrame::child(int row)
 {
-   if (row >= 0 && row < impl->childs.count())
-      return impl->childs.at(row);
+   if (row >= 0 && row < impl->children.count())
+      return impl->children.at(row);
 
    return nullptr;
 }
@@ -91,7 +91,7 @@ int ProtocolFrame::childDeep() const
 
 int ProtocolFrame::childCount() const
 {
-   return impl->childs.count();
+   return impl->children.count();
 }
 
 int ProtocolFrame::columnCount() const
@@ -103,7 +103,8 @@ ProtocolFrame *ProtocolFrame::appendChild(ProtocolFrame *item)
 {
    item->impl->parent = this;
 
-   impl->childs.append(item);
+   if (!impl->children.contains(item))
+      impl->children.append(item);
 
    return item;
 }
@@ -112,21 +113,20 @@ ProtocolFrame *ProtocolFrame::prependChild(ProtocolFrame *item)
 {
    item->impl->parent = this;
 
-   impl->childs.prepend(item);
+   impl->children.prepend(item);
 
    return item;
 }
 
 bool ProtocolFrame::insertChild(int position, int count, int columns)
 {
-   if (position < 0 || position > impl->childs.size())
+   if (position < 0 || position > impl->children.size())
       return false;
 
    for (int row = 0; row < count; ++row)
    {
       QVector<QVariant> data(columns);
-      auto *item = new ProtocolFrame(data, 0, this);
-      impl->childs.insert(position, item);
+      impl->children.insert(position, new ProtocolFrame(data, 0, this));
    }
 
    return true;
@@ -163,7 +163,7 @@ void ProtocolFrame::setParent(ProtocolFrame *parent)
 int ProtocolFrame::row() const
 {
    if (impl->parent)
-      return impl->parent->impl->childs.indexOf(const_cast<ProtocolFrame *>(this));
+      return impl->parent->impl->children.indexOf(const_cast<ProtocolFrame *>(this));
 
    return -1;
 }

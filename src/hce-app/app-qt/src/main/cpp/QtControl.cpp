@@ -124,7 +124,16 @@ struct QtControl::Impl
    {
       qInfo() << "start listener";
 
-      triggerListenerStart();
+      if (event->contains("fileName"))
+      {
+         const QJsonObject command {{"fileName", event->getString("fileName")}};
+
+         triggerListenerStart(command);
+      }
+      else
+      {
+         triggerListenerStart({});
+      }
    }
 
    /*
@@ -175,9 +184,11 @@ struct QtControl::Impl
    /*
     * start target listener task
     */
-   void triggerListenerStart(const std::function<void()> &onComplete = nullptr, const std::function<void(int, const std::string &)> &onReject = nullptr) const
+   void triggerListenerStart(const QJsonObject &data, const std::function<void()> &onComplete = nullptr, const std::function<void(int, const std::string &)> &onReject = nullptr) const
    {
-      listenerCommandStream->next({hce::tasks::TargetListenerTask::Start, onComplete, onReject});
+      const QJsonDocument doc(data);
+
+      listenerCommandStream->next({hce::tasks::TargetListenerTask::Start, onComplete, onReject, {{"data", doc.toJson().toStdString()}}});
    }
 
    /*
@@ -192,6 +203,8 @@ struct QtControl::Impl
 QtControl::QtControl() : impl(new Impl())
 {
 }
+
+QtControl::~QtControl() = default;
 
 void QtControl::handleEvent(QEvent *event)
 {

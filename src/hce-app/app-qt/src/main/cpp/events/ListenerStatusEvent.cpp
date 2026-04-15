@@ -45,6 +45,16 @@ const QJsonObject &ListenerStatusEvent::content() const
    return data;
 }
 
+bool ListenerStatusEvent::hasName() const
+{
+   return data.contains("name");
+}
+
+QString ListenerStatusEvent::name() const
+{
+   return data["name"].toString();
+}
+
 bool ListenerStatusEvent::hasStatus() const
 {
    return data.contains("status");

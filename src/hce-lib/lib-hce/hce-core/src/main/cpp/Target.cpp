@@ -23,7 +23,7 @@
 
 namespace hce {
 
-rt::Variant Target::get(int id)
+rt::Variant Target::get(int id) const
 {
    return {};
 }
@@ -31,6 +31,11 @@ rt::Variant Target::get(int id)
 bool Target::set(int id, const rt::Variant &value)
 {
    return false;
+}
+
+std::string Target::raw() const
+{
+   return {};
 }
 
 void Target::select()

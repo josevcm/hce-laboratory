@@ -26,20 +26,20 @@
 
 class ParserWidget : public QTreeView
 {
-   Q_OBJECT
-
-      struct Impl;
+      Q_OBJECT
 
    public:
 
       explicit ParserWidget(QWidget *parent = nullptr);
 
+      ~ParserWidget() override;
+
       void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible) override;
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
-
 
 #endif //NFC_LAB_PARSERWIDGET_H

@@ -35,6 +35,8 @@ class HexViewWidget : public QAbstractScrollArea
 
       explicit HexViewWidget(QWidget *parent = nullptr);
 
+      ~HexViewWidget() override;
+
       void clear();
 
       void setData(const QByteArray &data);
@@ -55,7 +57,7 @@ class HexViewWidget : public QAbstractScrollArea
 
    private:
 
-      QSharedPointer<Impl> impl;
+      std::unique_ptr<Impl> impl;
 
 };
 

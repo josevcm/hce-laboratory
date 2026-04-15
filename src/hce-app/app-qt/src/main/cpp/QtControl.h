@@ -32,17 +32,18 @@ class QtControl : public QObject
 {
       Q_OBJECT
 
-      struct Impl;
-
    public:
 
       explicit QtControl();
+
+      ~QtControl() override;
 
       void handleEvent(QEvent *event);
 
    private:
 
-      QSharedPointer<Impl> impl;
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
 
 #endif //APP_QTCONTROL_H
