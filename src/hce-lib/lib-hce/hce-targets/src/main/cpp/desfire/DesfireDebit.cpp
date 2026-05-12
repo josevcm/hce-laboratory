@@ -78,6 +78,10 @@ int DesfireDebit::debit(FileEntry *file, rt::ByteBuffer &data, rt::ByteBuffer &r
    if (debit < 0)
       return DESFIRE_STATUS_PARAMETER_ERROR;
 
+   // check lower limit
+   if (file->backupValue - debit < file->lowerLimit)
+      return DESFIRE_STATUS_BOUNDARY_ERROR;
+
    // update file value
    file->debit(debit);
 

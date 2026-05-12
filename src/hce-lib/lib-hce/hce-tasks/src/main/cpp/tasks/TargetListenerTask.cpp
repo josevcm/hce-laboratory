@@ -50,10 +50,14 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
 
    rt::Subject<Frame> *listenerFrameStream = nullptr;
 
+   rt::Subject<std::string> *listenerContentStream = nullptr;
+
    explicit Impl() : AbstractTask("worker.TargetListener", "target.listener"), pn7160(hw::PN7160::SPI)
    {
       // create frame stream subject
       listenerFrameStream = rt::Subject<Frame>::name("target.listener.frame");
+
+      listenerContentStream = rt::Subject<std::string>::name("target.listener.content");
    }
 
    void start() override
@@ -141,7 +145,17 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
 
       if (auto data = command.get<std::string>("data"))
       {
-         if (auto config = json::parse(data.value()); config.contains("fileName"))
+         auto config = json::parse(data.value());
+
+         if (config.contains("targetJson"))
+         {
+            std::string content = config["targetJson"];
+
+            log->info("load tag from JSON content");
+
+            target = std::make_shared<targets::Desfire>(content);
+         }
+         else if (config.contains("fileName"))
          {
             std::string path = config["fileName"];
 
@@ -150,9 +164,7 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
                log->info("load tag from: {}", {path});
 
                std::stringstream buffer;
-
                buffer << file.rdbuf();
-
                target = std::make_shared<targets::Desfire>(buffer.str());
             }
          }
@@ -278,6 +290,12 @@ struct TargetListenerTask::Impl : TargetListenerTask, AbstractTask
                else
                {
                   log->warn("target failed to process command");
+               }
+
+               if (target->isDirty())
+               {
+                  listenerContentStream->next(target->raw());
+                  target->clearDirty();
                }
             }
 

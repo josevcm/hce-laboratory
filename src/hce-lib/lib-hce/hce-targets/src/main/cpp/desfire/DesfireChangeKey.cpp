@@ -143,6 +143,9 @@ int DesfireChangeKey::changeKeyEV0(KeyEntry *keyEntry, unsigned int keyType, rt:
    LOG_INFO(log, "\tnewKeyType: 0x{02x}", {newKeyType});
    LOG_INFO(log, "\tnewKeyVersion: 0x{02x}", {newKeyVersion});
 
+   // set picc as dirty state
+   picc.dirty = true;
+
    return DESFIRE_STATUS_OK;
 }
 
@@ -245,6 +248,7 @@ int DesfireChangeKey::changeKeyEV1(KeyEntry *keyEntry, unsigned int keyType, rt:
    LOG_INFO(log, "\tnewKeyType: 0x{02x}", {newKeyType});
    LOG_INFO(log, "\tnewKeyVersion: 0x{02x}", {newKeyVersion});
 
+   picc.dirty = true;
    // send successful response
    return picc.sendAck(response);
 }

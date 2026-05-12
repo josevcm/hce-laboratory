@@ -62,6 +62,10 @@ class Desfire final : public Target
 
       int process(const rt::ByteBuffer &request, rt::ByteBuffer &response) override;
 
+      bool isDirty() const override;
+
+      void clearDirty() override;
+
    private:
 
       std::shared_ptr<Impl> impl;

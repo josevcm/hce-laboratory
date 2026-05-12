@@ -448,7 +448,7 @@ struct Usb::Impl
    }
 };
 
-Usb::Usb(const Descriptor &desc) : impl(new Impl(desc))
+Usb::Usb(const Descriptor &desc) : impl(std::make_unique<Impl>(desc))
 {
 }
 

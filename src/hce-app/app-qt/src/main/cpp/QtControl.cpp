@@ -35,6 +35,7 @@
 #include <events/ListenerStatusEvent.h>
 #include <events/SystemShutdownEvent.h>
 #include <events/SystemStartupEvent.h>
+#include <events/TargetStateEvent.h>
 
 #include <hce/Frame.h>
 
@@ -55,10 +56,12 @@ struct QtControl::Impl
    rt::Subject<rt::Event> *listenerStatusStream = nullptr;
    rt::Subject<rt::Event> *listenerCommandStream = nullptr;
    rt::Subject<hce::Frame> *listenerFrameStream = nullptr;
+   rt::Subject<std::string> *listenerContentStream = nullptr;
 
    // subscriptions
    rt::Subject<rt::Event>::Subscription listenerStatusSubscription;
    rt::Subject<rt::Event>::Subscription listenerFrameSubscription;
+   rt::Subject<std::string>::Subscription listenerContentSubscription;
 
    QString targetListenerStatus;
 
@@ -68,6 +71,7 @@ struct QtControl::Impl
       listenerStatusStream = rt::Subject<rt::Event>::name("target.listener.status");
       listenerCommandStream = rt::Subject<rt::Event>::name("target.listener.command");
       listenerFrameStream = rt::Subject<hce::Frame>::name("target.listener.frame");
+      listenerContentStream = rt::Subject<std::string>::name("target.listener.content");
    }
 
    /*
@@ -82,6 +86,10 @@ struct QtControl::Impl
 
       listenerFrameSubscription = listenerFrameStream->subscribe([this](const hce::Frame &frame) {
          listenerFrameEvent(frame);
+      });
+
+      listenerContentSubscription = listenerContentStream->subscribe([this](const std::string &json) {
+         targetContentEvent(json);
       });
    }
 
@@ -124,10 +132,14 @@ struct QtControl::Impl
    {
       qInfo() << "start listener";
 
-      if (event->contains("fileName"))
+      if (event->contains("targetJson"))
+      {
+         const QJsonObject command {{"targetJson", event->getString("targetJson")}};
+         triggerListenerStart(command);
+      }
+      else if (event->contains("fileName"))
       {
          const QJsonObject command {{"fileName", event->getString("fileName")}};
-
          triggerListenerStart(command);
       }
       else
@@ -182,6 +194,15 @@ struct QtControl::Impl
    }
 
    /*
+    * process new received content
+    */
+   void targetContentEvent(const std::string &json)
+   {
+      const QJsonObject target = QJsonDocument::fromJson(QByteArray::fromStdString(json)).object();
+      QtApplication::post(new TargetStateEvent(target), Qt::HighEventPriority);
+   }
+
+   /*
     * start target listener task
     */
    void triggerListenerStart(const QJsonObject &data, const std::function<void()> &onComplete = nullptr, const std::function<void(int, const std::string &)> &onReject = nullptr) const
@@ -200,7 +221,7 @@ struct QtControl::Impl
    }
 };
 
-QtControl::QtControl() : impl(new Impl())
+QtControl::QtControl() : impl(std::make_unique<Impl>())
 {
 }
 

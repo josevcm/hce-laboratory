@@ -77,6 +77,10 @@ int DesfireCredit::credit(FileEntry *file, rt::ByteBuffer &data, rt::ByteBuffer 
    if (credit < 0)
       return DESFIRE_STATUS_PARAMETER_ERROR;
 
+   // check upper limit
+   if (file->backupValue + credit > file->upperLimit)
+      return DESFIRE_STATUS_BOUNDARY_ERROR;
+
    // update file value
    file->credit(credit);
 

@@ -112,17 +112,55 @@ int DesfireCreateApplication::process(rt::ByteBuffer &request, rt::ByteBuffer &r
    // add default keys
    for (unsigned int i = 0; i < app.maximumKeys; ++i)
    {
+      unsigned int version = 0x00;
+
       switch (app.cryptoMode)
       {
          case KeyType2K3DES:
-            app.keys.emplace(i, KeyEntry {.id = i, .type = KeyType2K3DES, .version = 0x00, .key = DESFIRE_MASTER_KEY_DEFAULT_2K3DES});
+         {
+            rt::ByteBuffer key = DESFIRE_MASTER_KEY_DEFAULT_2K3DES;
+
+            if (picc.defaultKey.remaining() >= 16)
+            {
+               key = picc.defaultKey.slice(0, 16);
+               version = picc.defaultKeyVersion;
+            }
+
+            app.keys.emplace(i, KeyEntry {.id = i, .type = KeyType2K3DES, .version = version, .key = key});
+
             break;
+         }
+
          case KeyType3K3DES:
-            app.keys.emplace(i, KeyEntry {.id = i, .type = KeyType3K3DES, .version = 0x00, .key = DESFIRE_MASTER_KEY_DEFAULT_3K3DES});
+         {
+            rt::ByteBuffer key = DESFIRE_MASTER_KEY_DEFAULT_3K3DES;
+
+            if (picc.defaultKey.remaining() >= 24)
+            {
+               key = picc.defaultKey.slice(0, 24);
+               version = picc.defaultKeyVersion;
+            }
+
+            app.keys.emplace(i, KeyEntry {.id = i, .type = KeyType3K3DES, .version = version, .key = key});
+
             break;
+         }
+
          case KeyTypeAES:
-            app.keys.emplace(i, KeyEntry {.id = i, .type = KeyTypeAES, .version = 0x00, .key = DESFIRE_MASTER_KEY_DEFAULT_AES});
+         {
+            rt::ByteBuffer key = DESFIRE_MASTER_KEY_DEFAULT_AES;
+
+            if (picc.defaultKey.remaining() >= 16)
+            {
+               key = picc.defaultKey.slice(0, 16);
+               version = picc.defaultKeyVersion;
+            }
+
+            app.keys.emplace(i, KeyEntry {.id = i, .type = KeyTypeAES, .version = version, .key = key});
+
             break;
+         }
+
          default:
             return DESFIRE_STATUS_APPL_INTEGRITY_ERROR;
       }

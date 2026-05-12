@@ -81,7 +81,7 @@ struct Library::Impl
    }
 };
 
-Library::Library(const std::string &name) : impl(new Impl(name))
+Library::Library(const std::string &name) : impl(std::make_unique<Impl>(name))
 {
 }
 

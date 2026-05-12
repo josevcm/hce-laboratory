@@ -22,6 +22,7 @@
 #ifndef RT_BYTEBUFFER_H
 #define RT_BYTEBUFFER_H
 
+#include <algorithm>
 #include <iomanip>
 #include <sstream>
 #include <random>

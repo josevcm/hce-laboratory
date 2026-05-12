@@ -89,6 +89,24 @@ QString Theme::openFileDialog(QWidget *parent, const QString &caption, const QSt
    return {};
 }
 
+QStringList Theme::openFilesDialog(QWidget *parent, const QString &caption, const QString &dir, const QString &filter, QString *selectedFilter, QFileDialog::Options options)
+{
+   QFileDialog fileDialog(parent, caption, dir, filter);
+
+   fileDialog.setOptions(options);
+   fileDialog.setFileMode(QFileDialog::ExistingFiles);
+
+   if (fileDialog.exec() == QDialog::Accepted)
+   {
+      if (selectedFilter)
+         *selectedFilter = fileDialog.selectedNameFilter();
+
+      return fileDialog.selectedFiles();
+   }
+
+   return {};
+}
+
 QString Theme::saveFileDialog(QWidget *parent, const QString &caption, const QString &dir, const QString &filter, QString *selectedFilter, QFileDialog::Options options)
 {
    QFileDialog fileDialog(parent, caption, dir, filter);

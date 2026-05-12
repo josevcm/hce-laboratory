@@ -47,7 +47,7 @@ int DesfireIsoReadBinary::process(rt::ByteBuffer &request, rt::ByteBuffer &respo
    // if bit 7 = 0, remain 15 bits of P1/P2 is file offset
    // access by short FID not implemented!
    if (p1 & 0x80)
-      return DESFIRE_ISO_STATUS_FILE_NOT_FOUND;
+      return DESFIRE_ISO_STATUS_WRONG_PARAMETERS_P1P2;
 
    // elementary file must be selected before...
    if (picc.elementaryFile == nullptr)

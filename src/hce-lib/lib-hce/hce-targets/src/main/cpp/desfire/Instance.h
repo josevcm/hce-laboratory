@@ -197,10 +197,22 @@ struct Instance
    CipherDES des;
    CipherAES aes;
 
+   // PICC configuration flags (write-once)
+   bool formatDisabled = false;
+   bool randomId = false;
+
+   // default key applied to new applications (option 0x01), empty = use zero key
+   rt::ByteBuffer defaultKey = {};
+   unsigned int defaultKeyVersion = 0;
+
+   // user-defined ATS (option 0x02), empty = use hardware default
+   rt::ByteBuffer customAts = {};
+
    // current command and chaining status
    int protocol = 0;
    int command = 0;
    int chaining = 0;
+   bool dirty = false;
 
    // current command header a tx/rx buffer
    rt::ByteBuffer header;
@@ -367,7 +379,7 @@ struct Instance
    /*
     * update master key settings of current selected application
     */
-   void setKeySettings(unsigned int keySettings) const;
+   void setKeySettings(unsigned int keySettings);
 
    /*
     * check if current master key settings allow free directory listing
@@ -532,12 +544,12 @@ struct Instance
    /*
     * commit transaction
     */
-   bool commitData() const;
+   bool commitData();
 
    /*
     * rollback transaction
     */
-   bool rollbackData() const;
+   bool rollbackData();
 
    /*
     * detect communication mode and receive data from reader

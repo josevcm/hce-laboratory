@@ -229,7 +229,8 @@ void StreamFilter::setEnabled(bool enabled)
 {
    impl->enabled = enabled;
 
-   invalidateFilter();
+   beginFilterChange();
+   endFilterChange();
 }
 
 bool StreamFilter::hasFilters(int column)
@@ -257,7 +258,8 @@ void StreamFilter::addFilter(int column, const StreamFilter::Filter &filter)
    impl->clearAccepted();
 
    // trigger filter invalidate
-   invalidateFilter();
+   beginFilterChange();
+   endFilterChange();
 }
 
 void StreamFilter::addFilter(int column, Mode mode, const QVariant &value)
@@ -279,7 +281,8 @@ void StreamFilter::removeFilter(int column, StreamFilter::Mode mode)
    impl->clearAccepted();
 
    // trigger filter invalidate
-   invalidateFilter();
+   beginFilterChange();
+   endFilterChange();
 }
 
 void StreamFilter::clearFilters(int column)
@@ -291,7 +294,8 @@ void StreamFilter::clearFilters(int column)
    impl->clearAccepted();
 
    // trigger filter invalidate
-   invalidateFilter();
+   beginFilterChange();
+   endFilterChange();
 }
 
 int StreamFilter::rowsAccepted(int column)

@@ -35,6 +35,10 @@ int DesfireGetKeySettings::process(rt::ByteBuffer &request, rt::ByteBuffer &resp
    // update sessionIv
    picc.updateIv(request, 0);
 
+   // require master key authentication when directory listing is not free
+   if (!picc.isFreeDirectoryListing() && !picc.isAuthenticatedWithMasterKey())
+      return DESFIRE_STATUS_PERMISSION_DENIED;
+
    // prepare data
    const unsigned char keySettings1 = picc.application->keySettings;
    const unsigned char keySettings2 = picc.application->cryptoMode << 6 | picc.application->maximumKeys;

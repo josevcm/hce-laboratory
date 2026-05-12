@@ -95,7 +95,7 @@ struct StreamWidget::Impl
    }
 };
 
-StreamWidget::StreamWidget(QWidget *parent) : QTableView(parent), impl(new Impl(this))
+StreamWidget::StreamWidget(QWidget *parent) : QTableView(parent), impl(std::make_unique<Impl>(this))
 {
    QTableView::setSortingEnabled(true);
    QTableView::setStyleSheet("QTableView::pane { border: 0; }");

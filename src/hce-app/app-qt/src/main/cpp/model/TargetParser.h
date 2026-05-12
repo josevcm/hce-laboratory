@@ -19,31 +19,28 @@
 
 */
 
-#include <QtConfig.h>
+#ifndef APP_TARGET_PARSER_H
+#define APP_TARGET_PARSER_H
 
-#include "ui_ConfigDialog.h"
+#include <memory>
 
-#include "ConfigDialog.h"
+class QJsonObject;
+class TargetItem;
 
-struct ConfigDialog::Impl
+class TargetParser
 {
-   ConfigDialog *dialog = nullptr;
+   public:
 
-   QSharedPointer<Ui_ConfigDialog> ui;
+      explicit TargetParser();
 
-   explicit Impl(ConfigDialog *dialog) : dialog(dialog), ui(new Ui_ConfigDialog())
-   {
-      setup();
-   }
+      ~TargetParser();
 
-   void setup()
-   {
-      ui->setupUi(dialog);
-   }
+      TargetItem *parse(const QJsonObject &root);
+
+   private:
+
+      struct Impl;
+      std::unique_ptr<Impl> impl;
 };
 
-ConfigDialog::ConfigDialog(QWidget *parent) : QDialog(parent), impl(std::make_unique<Impl>(this))
-{
-}
-
-ConfigDialog::~ConfigDialog() = default;
+#endif

@@ -10,6 +10,6 @@ add_library(ftdi1 STATIC
 
 target_include_directories(ftdi1 PUBLIC ${PRIVATE_SOURCE_DIR})
 target_include_directories(ftdi1 PUBLIC ${PUBLIC_INCLUDE_DIR})
-target_include_directories(ftdi1 PRIVATE ${LIBUSB_INCLUDE_DIR})
+target_include_directories(ftdi1 PRIVATE ${LIBUSB_INCLUDE_DIRS})
 
-target_link_libraries(ftdi1 ${LIBUSB_LIBRARY})
+target_link_libraries(ftdi1 ${LIBUSB_LIBRARIES})

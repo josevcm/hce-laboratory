@@ -32,7 +32,7 @@ struct ExplorerWidget::Impl
    }
 };
 
-ExplorerWidget::ExplorerWidget(QWidget *parent) : QTreeView(parent), impl(new Impl(this))
+ExplorerWidget::ExplorerWidget(QWidget *parent) : QTreeView(parent), impl(std::make_unique<Impl>(this))
 {
 }
 

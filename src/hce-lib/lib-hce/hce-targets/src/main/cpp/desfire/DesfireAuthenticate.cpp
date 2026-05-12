@@ -132,14 +132,6 @@ int DesfireAuthenticate::process(rt::ByteBuffer &request, rt::ByteBuffer &respon
 
          break;
 
-      // 3 key DES, 192 bit session key
-      case 24:
-         sessionKey.put(rndA.slice(6, 4));
-         sessionKey.put(rndB.slice(6, 4));
-         sessionKey.put(rndA.slice(12, 4));
-         sessionKey.put(rndB.slice(12, 4));
-         break;
-
       default:
          return DESFIRE_STATUS_AUTHENTICATION_ERROR;
    }

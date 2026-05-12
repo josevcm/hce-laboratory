@@ -118,22 +118,105 @@
                                 <property name="documentMode">
                                     <bool>true</bool>
                                 </property>
-                                <widget class="QWidget" name="targetContent">
+                                <widget class="QWidget" name="targetInfo">
                                     <property name="sizePolicy">
                                         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                                             <horstretch>0</horstretch>
                                             <verstretch>0</verstretch>
                                         </sizepolicy>
                                     </property>
-                                    <property name="minimumSize">
-                                        <size>
-                                            <width>0</width>
-                                            <height>0</height>
-                                        </size>
-                                    </property>
                                     <attribute name="title">
-                                        <string>Content</string>
+                                        <string>Info</string>
                                     </attribute>
+                                    <layout class="QVBoxLayout" name="targetInfoLayout">
+                                        <property name="spacing">
+                                            <number>0</number>
+                                        </property>
+                                        <property name="leftMargin">
+                                            <number>0</number>
+                                        </property>
+                                        <property name="topMargin">
+                                            <number>0</number>
+                                        </property>
+                                        <property name="rightMargin">
+                                            <number>0</number>
+                                        </property>
+                                        <property name="bottomMargin">
+                                            <number>0</number>
+                                        </property>
+                                        <item>
+                                            <widget class="QSplitter" name="targetSplitter">
+                                                <property name="orientation">
+                                                    <enum>Qt::Orientation::Horizontal</enum>
+                                                </property>
+                                                <property name="handleWidth">
+                                                    <number>4</number>
+                                                </property>
+                                                <widget class="QTableWidget" name="targetInfoTable">
+                                                    <property name="sizePolicy">
+                                                        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                                                            <horstretch>0</horstretch>
+                                                            <verstretch>0</verstretch>
+                                                        </sizepolicy>
+                                                    </property>
+                                                    <property name="font">
+                                                        <font>
+                                                            <family>Consolas</family>
+                                                            <pointsize>10</pointsize>
+                                                        </font>
+                                                    </property>
+                                                    <property name="editTriggers">
+                                                        <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+                                                    </property>
+                                                    <property name="alternatingRowColors">
+                                                        <bool>false</bool>
+                                                    </property>
+                                                    <property name="selectionMode">
+                                                        <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+                                                    </property>
+                                                    <property name="selectionBehavior">
+                                                        <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+                                                    </property>
+                                                    <property name="showGrid">
+                                                        <bool>false</bool>
+                                                    </property>
+                                                    <attribute name="horizontalHeaderVisible">
+                                                        <bool>false</bool>
+                                                    </attribute>
+                                                    <attribute name="horizontalHeaderStretchLastSection">
+                                                        <bool>true</bool>
+                                                    </attribute>
+                                                    <attribute name="verticalHeaderVisible">
+                                                        <bool>false</bool>
+                                                    </attribute>
+                                                    <attribute name="verticalHeaderMinimumSectionSize">
+                                                        <number>20</number>
+                                                    </attribute>
+                                                    <attribute name="verticalHeaderDefaultSectionSize">
+                                                        <number>20</number>
+                                                    </attribute>
+                                                    <column>
+                                                        <property name="text">
+                                                            <string>Property</string>
+                                                        </property>
+                                                    </column>
+                                                    <column>
+                                                        <property name="text">
+                                                            <string>Value</string>
+                                                        </property>
+                                                    </column>
+                                                </widget>
+                                                <widget class="HexViewWidget" name="targetHexView" native="true">
+                                                    <property name="sizePolicy">
+                                                        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                                                            <horstretch>0</horstretch>
+                                                            <verstretch>0</verstretch>
+                                                        </sizepolicy>
+                                                    </property>
+                                                </widget>
+                                            </widget>
+                                        </item>
+                                    </layout>
                                 </widget>
                             </widget>
                         </widget>
@@ -470,10 +553,10 @@
                 <iconset theme="action-open"/>
             </property>
             <property name="text">
-                <string>Open Trace</string>
+                <string>Open Targets</string>
             </property>
             <property name="toolTip">
-                <string>Open Trace From File</string>
+                <string>Open Targets</string>
             </property>
             <property name="shortcut">
                 <string>Ctrl+O</string>
@@ -484,10 +567,10 @@
                 <iconset theme="action-save"/>
             </property>
             <property name="text">
-                <string>Save Trace</string>
+                <string>Save Target</string>
             </property>
             <property name="toolTip">
-                <string>Save Trace To File</string>
+                <string>Save Target</string>
             </property>
             <property name="shortcut">
                 <string>Ctrl+S</string>

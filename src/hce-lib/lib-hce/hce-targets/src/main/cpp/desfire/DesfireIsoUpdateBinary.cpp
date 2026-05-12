@@ -44,15 +44,9 @@ int DesfireIsoUpdateBinary::process(rt::ByteBuffer &request, rt::ByteBuffer &res
    if (request.remaining() != lc)
       return DESFIRE_ISO_STATUS_WRONG_LENGTH;
 
-   // if bit 7 = 1
+   // if bit 7 = 1, access by short FID not implemented
    if (p1 & 0x80)
-   {
-      // TODO: access by short FID
-      const unsigned int fileId = p1 & 0x1F; // short file ID
-      const unsigned int offset = p2; // offset 0-255
-
-      return DESFIRE_ISO_STATUS_FILE_NOT_FOUND;
-   }
+      return DESFIRE_ISO_STATUS_WRONG_PARAMETERS_P1P2;
 
    // if P1 bit 7 = 0, remain 15 bits of P1/P2 are file offset
    const unsigned int offset = p1 << 8 | p2;

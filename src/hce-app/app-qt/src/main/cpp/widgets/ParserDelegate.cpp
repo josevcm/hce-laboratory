@@ -42,7 +42,7 @@ struct ParserDelegate::Impl
    }
 };
 
-ParserDelegate::ParserDelegate(QObject *parent) : QStyledItemDelegate(parent), impl(new Impl())
+ParserDelegate::ParserDelegate(QObject *parent) : QStyledItemDelegate(parent), impl(std::make_unique<Impl>())
 {
 }
 

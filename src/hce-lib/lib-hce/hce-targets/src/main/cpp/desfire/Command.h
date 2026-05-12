@@ -40,6 +40,7 @@ This file is part of HCE-LABORATORY.
 #define DESFIRE_CMD_SET_CONFIGURATION         0x5C
 
 // --- MF3 IC D40 PICC Level Commands ---
+#define DESFIRE_CMD_GET_CARD_UID              0x51
 #define DESFIRE_CMD_CREATE_APPLICATION        0xCA
 #define DESFIRE_CMD_DELETE_APPLICATION        0xDA
 #define DESFIRE_CMD_GET_APPLICATION_IDS       0x6A
@@ -51,6 +52,7 @@ This file is part of HCE-LABORATORY.
 
 // --- MF3 IC D40 Application Level Commands ---
 #define DESFIRE_CMD_GET_FILE_IDS              0x6F
+#define DESFIRE_CMD_GET_ISO_FILE_IDS          0x61
 #define DESFIRE_CMD_GET_FILE_SETTINGS         0xF5
 #define DESFIRE_CMD_CHANGE_FILE_SETTINGS      0x5F
 #define DESFIRE_CMD_CREATE_STD_DATA_FILE      0xCD

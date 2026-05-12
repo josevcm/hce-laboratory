@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
             while (const int event = pn7160.waitEvent(request, 30000))
             {
                 // process received event
-                if (event == hw::PN7160::EVENT_DATA)
+                if (event == hw::PN7160::RESULT_OK_EVENT_DATA)
                 {
                     // clear previous response
                     response.clear();
@@ -101,12 +101,12 @@ int main(int argc, char* argv[])
                         break;
                     }
                 }
-                else if (event == hw::PN7160::EVENT_ACTIVATED)
+                else if (event == hw::PN7160::RESULT_OK_EVENT_ACTIVATED)
                 {
                     // log->info("card ACTIVATED **************************************");
                     card.select();
                 }
-                else if (event == hw::PN7160::EVENT_DEACTIVATED)
+                else if (event == hw::PN7160::RESULT_OK_EVENT_DEACTIVATED)
                 {
                     // log->info("card DEACTIVATED ************************************");
                     card.deselect();

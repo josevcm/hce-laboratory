@@ -257,6 +257,9 @@ void Instance::addApplication(const Application &app)
       // add ISO MasterFile
       isoAddDirectoryFile(mf);
    }
+
+   // set picc as dirty state
+   dirty = true;
 }
 
 /*
@@ -266,10 +269,15 @@ void Instance::deleteApplication(const unsigned int aid)
 {
    if (const auto it = applications.find(aid); it != applications.end())
    {
+      // remove ISO en
       if (it->second.isoEnabled)
          directoryFiles.erase(it->second.isoId);
 
+      // remove application
       applications.erase(it);
+
+      // set picc as dirty state
+      dirty = true;
    }
 }
 
@@ -376,6 +384,9 @@ void Instance::clearApplications()
       else
          ++it;
    }
+
+   // set picc as dirty state
+   dirty = true;
 }
 
 /*
@@ -406,6 +417,9 @@ void Instance::addFile(const FileEntry &file)
 
       isoAddElementaryFile(ef);
    }
+
+   // set picc as dirty state
+   dirty = true;
 }
 
 /*
@@ -414,7 +428,13 @@ void Instance::addFile(const FileEntry &file)
 void Instance::deleteFile(const unsigned int fileId)
 {
    assert(application != nullptr);
-   application->files.erase(fileId);
+
+   // remove file
+   if (application->files.erase(fileId) > 0)
+   {
+      // set picc as dirty state
+      dirty = true;
+   }
 }
 
 /*
@@ -485,9 +505,14 @@ unsigned int Instance::authorizeForWrite(const unsigned int commSettings, const 
 /*
  * update master key settings of current selected application
  */
-void Instance::setKeySettings(unsigned int keySettings) const
+void Instance::setKeySettings(unsigned int keySettings)
 {
    assert(application != nullptr);
+
+   // set picc as dirty state if key settings is changed
+   if (application->keySettings != keySettings)
+      dirty = true;
+
    application->keySettings = keySettings;
 }
 
@@ -794,7 +819,7 @@ bool Instance::isNeverAccessKey(unsigned int key) const
 /*
  * commit transaction
  */
-bool Instance::commitData() const
+bool Instance::commitData()
 {
    if (!application)
       return false;
@@ -812,13 +837,21 @@ bool Instance::commitData() const
       }
    }
 
+   if (committed)
+   {
+      LOG_INFO(log, "transaction committed");
+
+      // set picc as dirty state
+      dirty = true;
+   }
+
    return committed;
 }
 
 /*
  * rollback transaction
  */
-bool Instance::rollbackData() const
+bool Instance::rollbackData()
 {
    if (!application)
       return false;

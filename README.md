@@ -196,23 +196,33 @@ All can be compiled with mingw-w64; a minimum version supporting C++17 is requir
 
 ### Prerequisites
 
-- CMake version 3.17 or higher
-    - `winget install -e --id=Kitware.CMake`
-    - alternative see http://www.cmake.org/cmake/resources/software.html
 - Git-bash or your preferred git client
     - `winget install -e --id Git.Git`
     - alternative see https://gitforwindows.org/
 - Qt6 framework 6.x
-    - inside MSYS2: `pacman -S mingw-w64-x86_64-qt6-base`
-    - alternative see https://www.qt.io/offline-installers
-- GCC / G++ for Linux build, version 11.0 or later
-    - inside MSYS2: `pacman -S mingw-w64-ucrt-x86_64-gcc`
-    - alternative mingw-w64 11 for windows build see https://www.mingw-w64.org/downloads
+    - Only base and svg modules are required, but I recommend installing the full package to avoid compatibility issues.
+- GCC / G++ for, version 13 or later
+- Cmake, version 3.21 or later
+- Ninja build system (optional, but recommended for faster builds)
 - USB lib
-    - inside MSYS2: `pacman -S mingw-w64-x86_64-libusb`
-    - alternative using bundle dll contained in dll/usb/bin
+- FTDI lib
+
+> [!NOTE]
+> Use UCRT for MSYS2.
 
 ### Manual build for Windows
+
+Install dependencies (MSYS2 UCRT)
+
+```
+pacman -S mingw-w64-ucrt-x86_64-qt6-base
+pacman -S mingw-w64-ucrt-x86_64-qt6-svg 
+pacman -S mingw-w64-ucrt-x86_64-gcc
+pacman -S mingw-w64-ucrt-x86_64-cmake
+pacman -S mingw-w64-ucrt-x86_64-ninja
+pacman -S mingw-w64-ucrt-x86_64-libusb
+pacman -S mingw-w64-ucrt-x86_64-libftdi
+```
 
 Once you have all pre-requisites ready, clone the repository:
 ```
@@ -222,7 +232,7 @@ git clone https://github.com/josevcm/hce-laboratory.git
 Create a **build** directory and configure the project (change `CMAKE_BUILD_TYPE=Debug` and `-B cmake-build-debug` for debug output)
 
 ```
-cmake -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - MinGW Makefiles" -S hce-laboratory -B build
+cmake -DCMAKE_BUILD_TYPE=Release -S hce-laboratory -B build
 
 -- The C compiler identification is GNU 13.3.0
 -- The CXX compiler identification is GNU 13.3.0

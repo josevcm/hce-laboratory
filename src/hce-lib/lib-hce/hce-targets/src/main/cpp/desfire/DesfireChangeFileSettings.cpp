@@ -69,6 +69,9 @@ int DesfireChangeFileSettings::process(rt::ByteBuffer &request, rt::ByteBuffer &
    file->commSettings = commSettings;
    file->accessRights = accessRights;
 
+   // set picc as dirty state
+   picc.dirty = true;
+
    // send successful response
    return picc.sendAck(response);
 }

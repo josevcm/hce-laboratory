@@ -1,6 +1,6 @@
 /*
 
-  This file is part of HCE-LABORATORY.
+This file is part of HCE-LABORATORY.
 
   Copyright (C) 2025 Jose Vicente Campos Martinez, <josevcm@gmail.com>
 
@@ -20,38 +20,32 @@
 */
 
 #include "Instance.h"
-#include "DesfireFormatPICC.h"
+#include "DesfireGetCardUID.h"
 
 namespace hce::targets {
 
-DesfireFormatPICC::DesfireFormatPICC(Instance &bundle) : Command(bundle)
+DesfireGetCardUID::DesfireGetCardUID(Instance &bundle) : Command(bundle)
 {
 }
 
-int DesfireFormatPICC::process(rt::ByteBuffer &request, rt::ByteBuffer &response)
+int DesfireGetCardUID::process(rt::ByteBuffer &request, rt::ByteBuffer &response)
 {
-   LOG_INFO(log, "formatPICC");
+   LOG_INFO(log, "getCardUID");
 
-   // master application must be selected
-   if (!picc.isApplicationSelected(DESFIRE_MASTER_APP_ID))
-      return DESFIRE_STATUS_PERMISSION_DENIED;
-
-   // and authenticated with master key
-   if (!picc.isAuthenticatedWithMasterKey())
+   // authentication is required (any mode)
+   if (!picc.isAuthenticated())
       return DESFIRE_STATUS_AUTHENTICATION_ERROR;
 
-   // format is disabled via SetConfiguration
-   if (picc.formatDisabled)
-      return DESFIRE_STATUS_PERMISSION_DENIED;
-
-   // copy header for further CMAC processing and update IV
+   // update IV for CMAC chaining
    picc.updateIv(request, 0);
 
-   // clear all applications except the master
-   picc.clearApplications();
+   // UID is 7 bytes, returned encrypted with current session key
+   rt::ByteBuffer data = picc.uid.copy();
 
-   // send successful response
-   return picc.sendAck(response);
+   if (const int status = picc.encodeData(data, picc.uid.remaining(), CryptCommunication); status != DESFIRE_STATUS_OK)
+      return status;
+
+   return picc.sendData(response);
 }
 
 }

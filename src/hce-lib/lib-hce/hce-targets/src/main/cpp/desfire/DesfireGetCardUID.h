@@ -1,8 +1,8 @@
 /*
 
-  This file is part of HCE-LABORATORY.
+This file is part of HCE-LABORATORY.
 
-  Copyright (C) 2024 Jose Vicente Campos Martinez, <josevcm@gmail.com>
+  Copyright (C) 2025 Jose Vicente Campos Martinez, <josevcm@gmail.com>
 
   HCE-LABORATORY is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,31 +19,25 @@
 
 */
 
-#include <QtConfig.h>
+#ifndef HCE_DESFIRE_GET_CARD_UID_H
+#define HCE_DESFIRE_GET_CARD_UID_H
 
-#include "ui_ConfigDialog.h"
+#include <rt/Logger.h>
 
-#include "ConfigDialog.h"
+#include "Command.h"
 
-struct ConfigDialog::Impl
+namespace hce::targets {
+
+class DesfireGetCardUID final : public Command
 {
-   ConfigDialog *dialog = nullptr;
+   rt::Logger *log = rt::Logger::getLogger("hce.targets.desfire.GetCardUID");
 
-   QSharedPointer<Ui_ConfigDialog> ui;
+   public:
 
-   explicit Impl(ConfigDialog *dialog) : dialog(dialog), ui(new Ui_ConfigDialog())
-   {
-      setup();
-   }
+      explicit DesfireGetCardUID(Instance &bundle);
 
-   void setup()
-   {
-      ui->setupUi(dialog);
-   }
+      int process(rt::ByteBuffer &request, rt::ByteBuffer &response);
 };
 
-ConfigDialog::ConfigDialog(QWidget *parent) : QDialog(parent), impl(std::make_unique<Impl>(this))
-{
 }
-
-ConfigDialog::~ConfigDialog() = default;
+#endif //HCE_DESFIRE_GET_CARD_UID_H

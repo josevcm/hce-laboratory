@@ -19,77 +19,33 @@
 
 */
 
+#include <QColor>
+#include <QFile>
 #include <QFont>
 #include <QFontDatabase>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSet>
 
 #include <target/TargetItem.h>
 
 #include "TargetModel.h"
+#include "TargetParser.h"
 
 struct TargetModel::Impl
 {
    TargetItem *root;
 
-   // fonts
    QFont headerFont;
    QFont defaultFont;
 
+   int activeTargetRow = -1;
+
    Impl()
    {
-      QVector<QVariant> rootData;
+      root = new TargetItem({tr("Target"), tr("Type")});
 
-      rootData << tr("Target") << tr("Type");
-
-      root = new TargetItem(rootData);
-
-      auto target1 = new TargetItem({"04568F4A70E080", "Desfire"});
-      root->appendChild(target1);
-
-      auto discoveryTarget1 = new TargetItem({"Discovery"});
-      target1->appendChild(discoveryTarget1);
-
-      auto infoTarget1 = new TargetItem({"Manufacturer"});
-      target1->appendChild(infoTarget1);
-
-      auto applicationsTarget1 = new TargetItem({"Applications"});
-      target1->appendChild(applicationsTarget1);
-
-      auto application1Target1 = new TargetItem({"000001"});
-      applicationsTarget1->appendChild(application1Target1);
-
-      auto application1Keys = new TargetItem({"Keys"});
-      application1Target1->appendChild(application1Keys);
-
-      auto application1Key00 = new TargetItem({"00", "AES"});
-      application1Keys->appendChild(application1Key00);
-
-      auto application1Key01 = new TargetItem({"01", "AES"});
-      application1Keys->appendChild(application1Key01);
-
-      auto application1Files = new TargetItem({"Files"});
-      application1Target1->appendChild(application1Files);
-
-      auto application1File01 = new TargetItem({"01", "Backup"});
-      application1Files->appendChild(application1File01);
-
-      auto application1File02 = new TargetItem({"02", "Backup"});
-      application1Files->appendChild(application1File02);
-
-      auto application1File03 = new TargetItem({"03", "CyclicRecord"});
-      application1Files->appendChild(application1File03);
-
-      auto application1File04 = new TargetItem({"04", "CyclicRecord"});
-      application1Files->appendChild(application1File04);
-
-      auto application1File05 = new TargetItem({"05", "Value"});
-      application1Files->appendChild(application1File05);
-
-      // setup fonts
-      // headerFont.setFamily("Segoe UI");
       headerFont.setPointSize(11);
-      // headerFont.setBold(true);
-
-      // dataFont.setFamily("Segoe UI");
       defaultFont.setPointSize(11);
    }
 
@@ -99,7 +55,7 @@ struct TargetModel::Impl
    }
 };
 
-TargetModel::TargetModel(QObject *parent) : QAbstractItemModel(parent), impl(new Impl)
+TargetModel::TargetModel(QObject *parent) : QAbstractItemModel(parent), impl(std::make_unique<Impl>())
 {
 }
 
@@ -175,6 +131,26 @@ QVariant TargetModel::data(const QModelIndex &index, int role) const
       case Qt::DisplayRole:
          return item->data(index.column());
 
+      case BytesRole:
+         return item->data(2);
+
+      case InfoRole:
+         return item->data(3);
+
+      case JsonRole:
+         return item->data(4);
+
+      case Qt::ForegroundRole:
+
+         switch (item->state())
+         {
+            case TargetItem::State::Modified: return QColor("#FFA726");
+            case TargetItem::State::Added:    return QColor("#66BB6A");
+            default: break;
+         }
+
+         break;
+
       case Qt::FontRole:
          return impl->defaultFont;
    }
@@ -193,9 +169,202 @@ QVariant TargetModel::headerData(int section, Qt::Orientation orientation, int r
    return {};
 }
 
+Qt::ItemFlags TargetModel::flags(const QModelIndex &index) const
+{
+   if (!index.isValid())
+      return Qt::NoItemFlags;
+
+   if (impl->activeTargetRow >= 0)
+   {
+      QModelIndex root = index;
+      while (root.parent().isValid())
+         root = root.parent();
+
+      if (root.row() != impl->activeTargetRow)
+         return Qt::NoItemFlags;
+   }
+
+   return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+}
+
+void TargetModel::setActiveTarget(int row)
+{
+   impl->activeTargetRow = row;
+   emit layoutAboutToBeChanged();
+   emit layoutChanged();
+}
+
+static void resetItemStates(TargetItem *item)
+{
+   item->setState(TargetItem::State::Normal);
+   for (int i = 0; i < item->childCount(); ++i)
+      resetItemStates(item->child(i));
+}
+
+void TargetModel::clearActiveTarget()
+{
+   impl->activeTargetRow = -1;
+   resetItemStates(impl->root);
+   emit layoutAboutToBeChanged();
+   emit layoutChanged();
+}
+
+bool TargetModel::load(const QString &fileName)
+{
+   QFile file(fileName);
+
+   if (!file.open(QIODevice::ReadOnly))
+      return false;
+
+   QJsonParseError parseError;
+   QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &parseError);
+
+   if (doc.isNull() || !doc.isObject())
+      return false;
+
+   QJsonObject root = doc.object();
+
+   if (root["type"].toString() != "desfire")
+      return false;
+
+   TargetItem *card = TargetParser().parse(root);
+
+   int row = impl->root->childCount();
+   beginInsertRows(QModelIndex(), row, row);
+   impl->root->appendChild(card);
+   endInsertRows();
+
+   return true;
+}
+
 void TargetModel::resetModel()
 {
    beginResetModel();
    impl->root->clearChilds();
    endResetModel();
+}
+
+void TargetModel::updateContent(int row, const QJsonObject &root)
+{
+   if (row < 0 || row >= impl->root->childCount())
+      return;
+
+   TargetItem *newCard = TargetParser().parse(root);
+   TargetItem *cardItem = impl->root->child(row);
+   QModelIndex cardIndex = createIndex(row, 0, cardItem);
+
+   // Update card's own data columns in-place
+   bool changed = false;
+   for (int col = 0; col < cardItem->columnCount() && col < newCard->columnCount(); ++col)
+   {
+      if (cardItem->data(col) != newCard->data(col))
+      {
+         cardItem->setData(col, newCard->data(col));
+         changed = true;
+      }
+   }
+   if (changed)
+      emit dataChanged(cardIndex, createIndex(row, columnCount({}) - 1, cardItem));
+
+   // Recursively merge children without resetting the model
+   mergeTree(cardIndex, cardItem, newCard);
+
+   delete newCard;
+}
+
+static void markSubtreeAdded(TargetItem *item)
+{
+   item->setState(TargetItem::State::Added);
+   for (int i = 0; i < item->childCount(); ++i)
+      markSubtreeAdded(item->child(i));
+}
+
+static QString mergeKey(const QString &name)
+{
+   int bracket = name.indexOf('[');
+   return bracket >= 0 ? name.left(bracket).trimmed() : name;
+}
+
+void TargetModel::mergeTree(const QModelIndex &parentIndex, TargetItem *existing, TargetItem *newItem)
+{
+   // Phase 1: remove children that no longer exist in the new tree (backwards to keep indices stable)
+   QSet<QString> newNames;
+   for (int i = 0; i < newItem->childCount(); ++i)
+      newNames.insert(mergeKey(newItem->child(i)->data(0).toString()));
+
+   for (int i = existing->childCount() - 1; i >= 0; --i)
+   {
+      if (!newNames.contains(mergeKey(existing->child(i)->data(0).toString())))
+      {
+         beginRemoveRows(parentIndex, i, i);
+         existing->removeChild(i);
+         endRemoveRows();
+      }
+   }
+
+   // Phase 2: iterate new children in order — update existing ones, insert new ones
+   int insertPos = 0;
+
+   for (int ni = 0; ni < newItem->childCount(); ni++)
+   {
+      TargetItem *newChild = newItem->child(ni);
+      const QString key = mergeKey(newChild->data(0).toString());
+
+      // Search for a matching child in existing (from insertPos onward)
+      int existingRow = -1;
+
+      for (int i = insertPos; i < existing->childCount(); ++i)
+      {
+         if (mergeKey(existing->child(i)->data(0).toString()) == key)
+         {
+            existingRow = i;
+            break;
+         }
+      }
+
+      if (existingRow >= 0)
+      {
+         TargetItem *existingChild = existing->child(existingRow);
+
+         // Update data columns in-place
+         bool changed = false;
+
+         for (int col = 0; col < existingChild->columnCount() && col < newChild->columnCount(); ++col)
+         {
+            if (existingChild->data(col) != newChild->data(col))
+            {
+               existingChild->setData(col, newChild->data(col));
+               changed = true;
+            }
+         }
+
+         // Only update state when data changed; preserve Added/Modified across events
+         if (changed)
+         {
+            existingChild->setState(TargetItem::State::Modified);
+            emit dataChanged(
+               createIndex(existingRow, 0, existingChild),
+               createIndex(existingRow, columnCount({}) - 1, existingChild));
+         }
+
+         // Recurse into children
+         mergeTree(createIndex(existingRow, 0, existingChild), existingChild, newChild);
+
+         insertPos = existingRow + 1;
+      }
+      else
+      {
+         // New child: steal the fully-built subtree from newItem and insert it
+         TargetItem *orphan = newItem->takeChild(ni);
+         ni--;  // next iteration re-checks position ni (now occupied by the following child)
+
+         markSubtreeAdded(orphan);
+
+         beginInsertRows(parentIndex, insertPos, insertPos);
+         existing->insertChildAt(insertPos, orphan);
+         endInsertRows();
+
+         insertPos++;
+      }
+   }
 }

@@ -2,7 +2,7 @@
 
   This file is part of HCE-LABORATORY.
 
-  Copyright (C) 2024 Jose Vicente Campos Martinez, <josevcm@gmail.com>
+  Copyright (C) 2025 Jose Vicente Campos Martinez, <josevcm@gmail.com>
 
   HCE-LABORATORY is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,31 +19,27 @@
 
 */
 
-#include <QtConfig.h>
+#ifndef APP_TARGET_STATE_EVENT_H
+#define APP_TARGET_STATE_EVENT_H
 
-#include "ui_ConfigDialog.h"
+#include <QEvent>
+#include <QJsonObject>
 
-#include "ConfigDialog.h"
-
-struct ConfigDialog::Impl
+class TargetStateEvent : public QEvent
 {
-   ConfigDialog *dialog = nullptr;
+   public:
 
-   QSharedPointer<Ui_ConfigDialog> ui;
+      static const int Type;
 
-   explicit Impl(ConfigDialog *dialog) : dialog(dialog), ui(new Ui_ConfigDialog())
-   {
-      setup();
-   }
+   private:
 
-   void setup()
-   {
-      ui->setupUi(dialog);
-   }
+      QJsonObject mContent;
+
+   public:
+
+      explicit TargetStateEvent(const QJsonObject &content);
+
+      const QJsonObject &content() const;
 };
 
-ConfigDialog::ConfigDialog(QWidget *parent) : QDialog(parent), impl(std::make_unique<Impl>(this))
-{
-}
-
-ConfigDialog::~ConfigDialog() = default;
+#endif
