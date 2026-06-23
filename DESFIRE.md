@@ -1,6 +1,6 @@
 # DESFire Card Structure
 
-Reference document for the logical structure of a MIFARE DESFire EV1/EV2 card and the JSON format used by HCE Laboratory to define card images for physical emulation.
+Reference document for the logical structure of a MIFARE DESFire EV1 card and the JSON format used by HCE Laboratory to define card images for physical emulation.
 
 ---
 
