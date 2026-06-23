@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of NFC-EMULATION.
 
@@ -212,7 +212,7 @@ struct Main
 
       unsigned char uid[7] = {0x04, 0x51, 0x25, 0x7A, 0xE5, 0x48, 0x80};
 
-      hce::targets::Desfire card(uid);
+      hce::targets::desfire::Desfire card(uid);
 
       do
       {

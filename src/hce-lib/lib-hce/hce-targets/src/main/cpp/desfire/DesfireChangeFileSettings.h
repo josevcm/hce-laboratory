@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -26,7 +26,7 @@ This file is part of HCE-LABORATORY.
 
 #include "Command.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 class DesfireChangeFileSettings final : public Command
 {

@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -24,23 +24,39 @@
 
 #include <hce/Target.h>
 
-namespace hce::targets {
+namespace hce::targets::mifareplus {
 
-class MifarePlus : public Target
+class MifarePlus final : public Target
 {
    struct Impl;
 
    public:
 
-      explicit MifarePlus(unsigned char uid[]);
+      explicit MifarePlus();
+
+      explicit MifarePlus(const std::string &tag);
+
+      rt::Variant get(int id) const override;
+
+      bool set(int id, const rt::Variant &value) override;
+
+      void select() override;
+
+      void deselect() override;
+
+      std::string raw() const override;
 
       int process(const rt::ByteBuffer &request, rt::ByteBuffer &response) override;
+
+      bool isDirty() const override;
+
+      void clearDirty() override;
 
    private:
 
       std::shared_ptr<Impl> impl;
 };
 
-}
+} // namespace hce::targets::mifareplus
 
-#endif //HCE_MIFAREPLUS_H
+#endif // HCE_MIFAREPLUS_H

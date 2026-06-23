@@ -30,6 +30,8 @@ class TargetItem : public QObject
 
    public:
 
+      enum class State { Normal, Modified, Added };
+
       explicit TargetItem(const QVector<QVariant> &data, TargetItem *parent = nullptr);
 
       ~TargetItem() override;
@@ -48,9 +50,23 @@ class TargetItem : public QObject
 
       QVariant data(int column) const;
 
+      void setData(int column, const QVariant &value);
+
+      State state() const;
+
+      void setState(State state);
+
       int row() const;
 
       TargetItem *parent() const;
+
+      void replaceChild(int row, TargetItem *item);
+
+      TargetItem *takeChild(int row);
+
+      void removeChild(int row);
+
+      void insertChildAt(int row, TargetItem *item);
 
    private:
 

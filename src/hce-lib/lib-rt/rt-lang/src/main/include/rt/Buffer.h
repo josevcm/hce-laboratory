@@ -67,14 +67,30 @@ class Buffer
 
       static Heap<T> heap;
 
+      /**
+       * Creates an empty/invalid buffer with no allocation.
+       */
       Buffer() : state {0, 0, 0}, attrs {0, 0, 0, nullptr}
       {
       }
 
+      /**
+       * Creates a shallow copy that shares the same allocation/state snapshot.
+       * @param other Source buffer.
+       */
       Buffer(const Buffer &other) : alloc(other.alloc), state(other.state), attrs(other.attrs)
       {
       }
 
+      /**
+       * Creates a buffer from raw data and flips it for read mode.
+       * @param data Source pointer.
+       * @param capacity Number of elements to allocate/copy.
+       * @param type Optional payload type tag.
+       * @param stride Elements per logical chunk.
+       * @param interleave Channel interleave.
+       * @param context Optional user context pointer.
+       */
       explicit Buffer(const T *data, unsigned int capacity, unsigned int type = 0, unsigned int stride = 1, unsigned int interleave = 1, void *context = nullptr) : Buffer(capacity, type, stride, interleave, context)
       {
          if (data && capacity)
@@ -84,19 +100,43 @@ class Buffer
          }
       }
 
+      /**
+       * Creates a buffer with allocated storage.
+       * @param capacity Number of elements to allocate.
+       * @param type Optional payload type tag.
+       * @param stride Elements per logical chunk.
+       * @param interleave Channel interleave.
+       * @param context Optional user context pointer.
+       */
       explicit Buffer(unsigned int capacity, unsigned int type = 0, unsigned int stride = 1, unsigned int interleave = 1, void *context = nullptr) : state {0, capacity, capacity}, attrs {type, stride, interleave, context}
       {
          alloc = heap.alloc(capacity, ALLOC_ALIGNMENT);
       }
 
+      /**
+       * Creates a buffer from an initializer list and flips it for read mode.
+       * @param data Source elements.
+       * @param type Optional payload type tag.
+       * @param stride Elements per logical chunk.
+       * @param interleave Channel interleave.
+       * @param context Optional user context pointer.
+       */
       Buffer(std::initializer_list<T> data, unsigned int type = 0, unsigned int stride = 1, unsigned int interleave = 1, void *context = nullptr) : Buffer(data.size(), type, stride, interleave, context)
       {
          put(data);
          flip();
       }
 
+      /**
+       * Destroys the buffer wrapper (shared allocation is released automatically).
+       */
       ~Buffer() = default;
 
+      /**
+       * Assigns from another buffer (shared allocation semantics).
+       * @param other Source buffer.
+       * @return Reference to this buffer.
+       */
       Buffer &operator=(const Buffer &other)
       {
          if (&other == this)
@@ -109,6 +149,11 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Compares readable ranges for equality.
+       * @param other Buffer to compare.
+       * @return True if readable bytes/elements are equal.
+       */
       bool operator==(const Buffer &other) const
       {
          if (this == &other)
@@ -123,11 +168,19 @@ class Buffer
          return std::memcmp(ptr(), other.ptr(), remaining()) == 0;
       }
 
+      /**
+       * Compares readable ranges for inequality.
+       * @param other Buffer to compare.
+       * @return True if readable ranges differ.
+       */
       bool operator!=(const Buffer &other) const
       {
          return !operator==(other);
       }
 
+      /**
+       * Releases allocation and resets all state/attributes.
+       */
       void reset()
       {
          alloc.reset();
@@ -135,77 +188,92 @@ class Buffer
          attrs = {0, 0, 0, nullptr};
       }
 
+      /** @return True if buffer has a valid allocation. */
       bool isValid() const
       {
          return alloc != nullptr;
       }
 
+      /** @return True if position reached limit. */
       bool isEmpty() const
       {
          return state.position == state.limit;
       }
 
+      /** @return True if position reached capacity. */
       bool isFull() const
       {
          return state.position == state.capacity;
       }
 
+      /** @return Current cursor position. */
       unsigned int position() const
       {
          return state.position;
       }
 
+      /** @return Current logical limit. */
       unsigned int limit() const
       {
          return state.limit;
       }
 
+      /** @return Total allocated capacity (elements). */
       unsigned int capacity() const
       {
          return state.capacity;
       }
 
+      /** @return Elements available to read/write until limit. */
       unsigned int remaining() const
       {
          return state.limit - state.position;
       }
 
+      /** @return Logical element count considering stride/interleave metadata. */
       unsigned int elements() const
       {
          return state.limit * attrs.interleave / attrs.stride;
       }
 
+      /** @return Stride metadata value. */
       unsigned int stride() const
       {
          return attrs.stride;
       }
 
+      /** @return Interleave metadata value from allocation. */
       unsigned int interleave() const
       {
          assert(alloc != nullptr);
          return alloc->interleave;
       }
 
+      /** @return Readable size in bytes. */
       unsigned int size() const
       {
          return state.limit * sizeof(T);
       }
 
+      /** @return Chunk size in bytes (stride * sizeof(T)). */
       unsigned int chunk() const
       {
          return attrs.stride * sizeof(T);
       }
 
+      /** @return User-defined type tag. */
       unsigned int type() const
       {
          return attrs.type;
       }
 
+      /** @return User context pointer. */
       void *context() const
       {
          return attrs.context;
       }
 
+      /** @return Pointer to start of allocated storage. */
       T *data() const
       {
          assert(alloc != nullptr);
@@ -213,6 +281,7 @@ class Buffer
          return alloc->data;
       }
 
+      /** @return Pointer at current position. */
       T *ptr() const
       {
          assert(alloc != nullptr);
@@ -220,6 +289,11 @@ class Buffer
          return alloc->data + state.position;
       }
 
+      /**
+       * Resizes storage preserving up to min(newCapacity, current limit) elements.
+       * @param newCapacity New capacity in elements.
+       * @return Reference to this buffer.
+       */
       Buffer &resize(unsigned int newCapacity)
       {
          assert(alloc != nullptr);
@@ -239,6 +313,10 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Sets write/read mode to full capacity and rewinds position.
+       * @return Reference to this buffer.
+       */
       Buffer &clear()
       {
          assert(alloc != nullptr);
@@ -249,6 +327,12 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Writes repeated value at current position.
+       * @param value Value to write.
+       * @param count Number of elements.
+       * @return Reference to this buffer.
+       */
       Buffer &fill(T value, unsigned int count)
       {
          assert(alloc != nullptr);
@@ -261,6 +345,10 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Switches from write mode to read mode (limit=position, position=0).
+       * @return Reference to this buffer.
+       */
       Buffer &flip()
       {
          assert(alloc != nullptr);
@@ -271,6 +359,10 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Rewinds position to the start without changing limit.
+       * @return Reference to this buffer.
+       */
       Buffer &rewind()
       {
          assert(alloc != nullptr);
@@ -280,6 +372,11 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Extends current limit by a number of elements.
+       * @param size Elements to add to limit.
+       * @return Reference to this buffer.
+       */
       Buffer &room(unsigned int size)
       {
          assert(alloc != nullptr);
@@ -290,8 +387,9 @@ class Buffer
          return *this;
       }
 
-      /*
-       * extract one element from head
+      /**
+       * Extracts one element from the head (position++)
+       * @return Extracted element.
        */
       T get()
       {
@@ -301,8 +399,9 @@ class Buffer
          return alloc->data[state.position++];
       }
 
-      /*
-       * read one element from head (without update head pointer)
+      /**
+       * Reads one element from the head without moving position.
+       * @return Peeked element.
        */
       T peek() const
       {
@@ -312,8 +411,9 @@ class Buffer
          return alloc->data[state.position];
       }
 
-      /*
-       * extract one element from tail
+      /**
+       * Extracts one element from the tail (limit--).
+       * @return Extracted element.
        */
       T pop()
       {
@@ -323,8 +423,10 @@ class Buffer
          return alloc->data[--state.limit];
       }
 
-      /*
-       * add one element to tail
+      /**
+       * Writes one element at current position (position++).
+       * @param value Element value.
+       * @return Reference to this buffer.
        */
       Buffer &put(const T &value)
       {
@@ -336,8 +438,10 @@ class Buffer
          return *this;
       }
 
-      /*
-       * add element list to tail
+      /**
+       * Writes an initializer list at current position.
+       * @param data Source values.
+       * @return Reference to this buffer.
        */
       Buffer &put(std::initializer_list<T> data)
       {
@@ -347,8 +451,11 @@ class Buffer
          return *this;
       }
 
-      /*
-       * extract elements from head
+      /**
+       * Extracts multiple elements from head.
+       * @param data Destination pointer.
+       * @param elements Number of elements to read.
+       * @return Reference to this buffer.
        */
       Buffer &get(T *data, unsigned int elements)
       {
@@ -363,7 +470,10 @@ class Buffer
       }
 
       /**
-       Read elements from head (without update head pointer)
+       * Reads multiple elements from head without moving position.
+       * @param data Destination pointer.
+       * @param elements Number of elements to read.
+       * @return Const reference to this buffer.
        */
       const Buffer &peek(T *data, unsigned int elements) const
       {
@@ -375,8 +485,11 @@ class Buffer
          return *this;
       }
 
-      /*
-       * extract elements from tail
+      /**
+       * Extracts multiple elements from tail.
+       * @param data Destination pointer.
+       * @param elements Number of elements to pop.
+       * @return Reference to this buffer.
        */
       Buffer &pop(T *data, unsigned int elements)
       {
@@ -390,8 +503,11 @@ class Buffer
          return *this;
       }
 
-      /*
-       * add elements from head
+      /**
+       * Writes multiple elements from pointer.
+       * @param data Source pointer.
+       * @param elements Number of elements to write.
+       * @return Reference to this buffer.
        */
       Buffer &put(const T *data, unsigned int elements)
       {
@@ -405,8 +521,11 @@ class Buffer
          return *this;
       }
 
-      /*
-       * extract buffer from head
+      /**
+       * Extracts elements from this buffer into another buffer.
+       * @param data Destination buffer.
+       * @param elements Number of elements to transfer.
+       * @return Reference to this buffer.
        */
       Buffer &get(Buffer &data, unsigned int elements)
       {
@@ -422,8 +541,11 @@ class Buffer
          return *this;
       }
 
-      /*
-       * read buffer from head (without update head pointer)
+      /**
+       * Reads elements into another buffer without moving this position.
+       * @param data Destination buffer.
+       * @param elements Number of elements to copy.
+       * @return Const reference to this buffer.
        */
       const Buffer &peek(Buffer &data, unsigned int elements) const
       {
@@ -437,8 +559,11 @@ class Buffer
          return *this;
       }
 
-      /*
-       * extract buffer from tail
+      /**
+       * Pops elements from this tail into destination buffer.
+       * @param data Destination buffer.
+       * @param elements Number of elements to pop.
+       * @return Reference to this buffer.
        */
       Buffer &pop(Buffer &data, unsigned int elements)
       {
@@ -451,8 +576,11 @@ class Buffer
          return *this;
       }
 
-      /*
-       * add buffer to head
+      /**
+       * Writes elements from source buffer into this buffer.
+       * @param data Source buffer.
+       * @param elements Number of elements to copy.
+       * @return Reference to this buffer.
        */
       Buffer &put(const Buffer &data, unsigned int elements)
       {
@@ -465,38 +593,52 @@ class Buffer
          return *this;
       }
 
-      /*
-       * extract buffer from head
+      /**
+       * Extracts up to destination remaining elements from head.
+       * @param data Destination buffer.
+       * @return Reference to this buffer.
        */
       Buffer &get(Buffer &data)
       {
          return get(data, data.remaining());
       }
 
-      /*
-       * read buffer from head (without update head pointer)
+      /**
+       * Reads up to destination remaining elements without moving position.
+       * @param data Destination buffer.
+       * @return Const reference to this buffer.
        */
       const Buffer &peek(Buffer &data) const
       {
          return peek(data, data.remaining());
       }
 
-      /*
-       * get buffer from tail
+      /**
+       * Pops destination remaining elements from tail.
+       * @param data Destination buffer.
+       * @return Reference to this buffer.
        */
       Buffer &pop(Buffer &data)
       {
          return pop(data, data.remaining());
       }
 
-      /*
-       * add buffer to head
+      /**
+       * Writes source remaining elements to this buffer.
+       * @param data Source buffer.
+       * @return Reference to this buffer.
        */
       Buffer &put(const Buffer &data)
       {
          return put(data, data.remaining());
       }
 
+      /**
+       * Reserves space at head side and returns writable pointer.
+       * @param elements Number of elements to reserve.
+       * @param clear If true, zero-initialize reserved range.
+       * @return Pointer to the reserved range start.
+       */
       T *push(unsigned int elements, bool clear = false)
       {
          assert(alloc != nullptr);
@@ -510,6 +652,12 @@ class Buffer
          return alloc->data + state.position - elements;
       }
 
+      /**
+       * Moves position backward and returns pointer to restored region.
+       * @param elements Number of elements to release.
+       * @param clear If true, zero the released range.
+       * @return Pointer to the new current position.
+       */
       T *pull(unsigned int elements, bool clear = false)
       {
          assert(alloc != nullptr);
@@ -523,6 +671,11 @@ class Buffer
          return alloc->data + state.position;
       }
 
+      /**
+       * Moves position forward by a number of elements.
+       * @param elements Number of elements to skip.
+       * @return Shallow copy of this buffer state after skip.
+       */
       Buffer skip(unsigned int elements)
       {
          assert(alloc != nullptr);
@@ -533,6 +686,12 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Rotates underlying storage left/right by count.
+       * @param dir Rotation direction.
+       * @param count Number of positions.
+       * @return Reference to this buffer.
+       */
       Buffer &rotate(Direction dir, unsigned int count = 1)
       {
          if (count > state.capacity)
@@ -578,6 +737,12 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Shifts underlying storage left/right filling emptied elements with zero.
+       * @param dir Shift direction.
+       * @param count Number of positions.
+       * @return Reference to this buffer.
+       */
       Buffer &shift(Direction dir, unsigned int count = 1)
       {
          if (count > state.capacity)
@@ -615,6 +780,13 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Writes a slice from source buffer into this buffer at offset.
+       * @param data Source buffer.
+       * @param offset Destination offset in this buffer.
+       * @param elements Number of elements to copy.
+       * @return Reference to this buffer.
+       */
       Buffer &set(const Buffer &data, unsigned int offset, unsigned int elements)
       {
          assert(alloc != nullptr);
@@ -629,11 +801,22 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Writes all source remaining elements into this buffer at offset.
+       * @param data Source buffer.
+       * @param offset Destination offset.
+       * @return Reference to this buffer.
+       */
       Buffer &set(const Buffer &data, unsigned int offset)
       {
          return set(data, offset, data.remaining());
       }
 
+      /**
+       * Shrinks limit by size elements from tail.
+       * @param size Number of elements to trim.
+       * @return Reference to this buffer.
+       */
       Buffer &trim(unsigned int size)
       {
          assert(alloc != nullptr);
@@ -644,6 +827,13 @@ class Buffer
          return *this;
       }
 
+      /**
+       * Reduces readable range into an accumulator value.
+       * @tparam E Accumulator type.
+       * @param value Initial accumulator value.
+       * @param handler Reduction function(acc, element) -> acc.
+       * @return Final reduced accumulator.
+       */
       template <typename E>
       E reduce(E value, const std::function<E(E, T)> &handler) const
       {
@@ -655,6 +845,10 @@ class Buffer
          return value;
       }
 
+      /**
+       * Streams data by stride-sized chunks.
+       * @param handler Callback receiving chunk pointer and chunk element count.
+       */
       void stream(const std::function<void(const T *, unsigned int)> &handler) const
       {
          assert(alloc != nullptr);
@@ -663,6 +857,11 @@ class Buffer
             handler(alloc->data + i, attrs.stride);
       }
 
+      /**
+       * Random-access element by absolute index.
+       * @param index Absolute index.
+       * @return Mutable element reference.
+       */
       T &operator[](unsigned int index)
       {
          assert(alloc != nullptr);
@@ -670,6 +869,11 @@ class Buffer
          return alloc->data[index];
       }
 
+      /**
+       * Random-access element by absolute index.
+       * @param index Absolute index.
+       * @return Const element reference.
+       */
       const T &operator[](unsigned int index) const
       {
          assert(alloc != nullptr);

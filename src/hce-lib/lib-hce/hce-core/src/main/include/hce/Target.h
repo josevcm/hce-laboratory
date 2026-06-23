@@ -64,6 +64,10 @@ class Target
       virtual std::string raw() const;
 
       virtual int process(const rt::ByteBuffer &request, rt::ByteBuffer &response);
+
+      virtual bool isDirty() const { return false; }
+
+      virtual void clearDirty() {}
 };
 
 }

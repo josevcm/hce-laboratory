@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -23,7 +23,7 @@
 
 #define DESFIRE_NV_BLOCK_SIZE 32
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 void FileEntry::write(const rt::ByteBuffer &value, unsigned int offset, unsigned int length)
 {
@@ -62,7 +62,7 @@ bool FileEntry::commit()
    {
       case BackupFile:
       {
-         data = backup;
+         data = backup.copy();
          break;
       }
 
@@ -126,7 +126,7 @@ bool FileEntry::rollback()
    {
       case BackupFile:
       {
-         backup = data;
+         backup = data.copy();
          break;
       }
 

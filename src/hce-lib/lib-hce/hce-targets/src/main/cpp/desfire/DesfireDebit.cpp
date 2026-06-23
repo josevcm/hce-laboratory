@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@ This file is part of HCE-LABORATORY.
 #include "Instance.h"
 #include "DesfireDebit.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireDebit::DesfireDebit(Instance &bundle) : Command(bundle)
 {
@@ -77,6 +77,10 @@ int DesfireDebit::debit(FileEntry *file, rt::ByteBuffer &data, rt::ByteBuffer &r
    // debit value must be always positive
    if (debit < 0)
       return DESFIRE_STATUS_PARAMETER_ERROR;
+
+   // check lower limit
+   if (file->backupValue - debit < file->lowerLimit)
+      return DESFIRE_STATUS_BOUNDARY_ERROR;
 
    // update file value
    file->debit(debit);

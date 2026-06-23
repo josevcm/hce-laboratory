@@ -26,6 +26,7 @@ struct TargetItem::Impl
    TargetItem *parent;
    QVector<QVariant> data;
    QVector<TargetItem *> children;
+   State state = State::Normal;
 
    Impl(const QVector<QVariant> &data, TargetItem *parent) : parent(parent), data(data)
    {
@@ -37,7 +38,7 @@ struct TargetItem::Impl
    }
 };
 
-TargetItem::TargetItem(const QVector<QVariant> &data, TargetItem *parent) : QObject(nullptr), impl(new Impl(data, parent))
+TargetItem::TargetItem(const QVector<QVariant> &data, TargetItem *parent) : QObject(nullptr), impl(std::make_unique<Impl>(data, parent))
 {
 }
 
@@ -99,4 +100,57 @@ int TargetItem::row() const
 TargetItem *TargetItem::parent() const
 {
    return impl->parent;
+}
+
+void TargetItem::setData(int column, const QVariant &value)
+{
+   if (column >= 0 && column < impl->data.size())
+      impl->data[column] = value;
+}
+
+TargetItem::State TargetItem::state() const
+{
+   return impl->state;
+}
+
+void TargetItem::setState(State s)
+{
+   impl->state = s;
+}
+
+TargetItem *TargetItem::takeChild(int row)
+{
+   if (row < 0 || row >= impl->children.size())
+      return nullptr;
+
+   TargetItem *item = impl->children.takeAt(row);
+   item->impl->parent = nullptr;
+   return item;
+}
+
+void TargetItem::removeChild(int row)
+{
+   if (row < 0 || row >= impl->children.size())
+      return;
+
+   delete impl->children.takeAt(row);
+}
+
+void TargetItem::insertChildAt(int row, TargetItem *item)
+{
+   item->impl->parent = this;
+   impl->children.insert(row, item);
+}
+
+void TargetItem::replaceChild(int row, TargetItem *item)
+{
+   if (row < 0 || row >= impl->children.size())
+   {
+      delete item;
+      return;
+   }
+
+   delete impl->children[row];
+   item->impl->parent = this;
+   impl->children[row] = item;
 }

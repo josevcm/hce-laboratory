@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@
 #include "Instance.h"
 #include "DesfireFormatPICC.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireFormatPICC::DesfireFormatPICC(Instance &bundle) : Command(bundle)
 {
@@ -39,6 +39,10 @@ int DesfireFormatPICC::process(rt::ByteBuffer &request, rt::ByteBuffer &response
    // and authenticated with master key
    if (!picc.isAuthenticatedWithMasterKey())
       return DESFIRE_STATUS_AUTHENTICATION_ERROR;
+
+   // format is disabled via SetConfiguration
+   if (picc.formatDisabled)
+      return DESFIRE_STATUS_PERMISSION_DENIED;
 
    // copy header for further CMAC processing and update IV
    picc.updateIv(request, 0);

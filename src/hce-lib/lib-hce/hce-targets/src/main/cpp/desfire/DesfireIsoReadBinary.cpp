@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@
 #include "Instance.h"
 #include "DesfireIsoReadBinary.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireIsoReadBinary::DesfireIsoReadBinary(Instance &bundle) : Command(bundle)
 {
@@ -44,25 +44,37 @@ int DesfireIsoReadBinary::process(rt::ByteBuffer &request, rt::ByteBuffer &respo
    if (request.remaining() > 0)
       return DESFIRE_ISO_STATUS_WRONG_LENGTH;
 
-   // if bit 7 = 0, remain 15 bits of P1/P2 is file offset
-   // access by short FID not implemented!
+   const FileEntry *file;
+   unsigned int offset;
+
    if (p1 & 0x80)
-      return DESFIRE_ISO_STATUS_FILE_NOT_FOUND;
+   {
+      // P1 bit7=1: P1[4:0] = Short File ID, P2 = offset (implicit, non-persistent selection)
+      const unsigned int sfi = p1 & 0x1F;
+      offset = p2;
 
-   // elementary file must be selected before...
-   if (picc.elementaryFile == nullptr)
-      return DESFIRE_ISO_STATUS_FILE_NOT_FOUND;
+      file = picc.getFileByShortFID(sfi);
 
-   // get offset
-   const unsigned int offset = p1 << 8 | p2;
+      if (file == nullptr)
+         return DESFIRE_ISO_STATUS_FILE_NOT_FOUND;
 
-   LOG_INFO(log, "\tisoId: 0x{02x}", {picc.elementaryFile->isoId});
-   LOG_INFO(log, "\tfileId: 0x{02x}", {picc.elementaryFile->fileId});
+      LOG_INFO(log, "\tsfi: 0x{02x}", {sfi});
+   }
+   else
+   {
+      // P1 bit7=0: P1:P2 = 15-bit offset within current selected EF
+      if (picc.elementaryFile == nullptr)
+         return DESFIRE_ISO_STATUS_FILE_NOT_FOUND;
+
+      offset = p1 << 8 | p2;
+      file = picc.getFile(picc.elementaryFile->fileId);
+
+      LOG_INFO(log, "\tisoId: 0x{02x}", {picc.elementaryFile->isoId});
+      LOG_INFO(log, "\tfileId: 0x{02x}", {picc.elementaryFile->fileId});
+   }
+
    LOG_INFO(log, "\toffset: {}", {offset});
    LOG_INFO(log, "\tlength: {}", {le});
-
-   // get file
-   const FileEntry *file = picc.getFile(picc.elementaryFile->fileId);
 
    // check file type
    if (!file->isDataFile())

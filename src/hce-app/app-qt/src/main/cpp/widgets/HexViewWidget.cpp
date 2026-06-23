@@ -81,7 +81,7 @@ struct HexViewWidget::Impl
       dataCoord = addrCoord + addrWidth + 10;
       dataWidth = dataFontMetrics.horizontalAdvance("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00");
 
-      textCoord = dataCoord + dataWidth + 10;
+      textCoord = dataCoord + dataWidth + 20;
       textWidth = textFontMetrics.horizontalAdvance("0123456789ABCDEF");
 
       // char metrics
@@ -222,7 +222,7 @@ struct HexViewWidget::Impl
    }
 };
 
-HexViewWidget::HexViewWidget(QWidget *parent) : QAbstractScrollArea(parent), impl(new Impl(this))
+HexViewWidget::HexViewWidget(QWidget *parent) : QAbstractScrollArea(parent), impl(std::make_unique<Impl>(this))
 {
    setFocusPolicy(Qt::StrongFocus);
    setMinimumWidth(impl->textCoord + impl->textWidth + 30);

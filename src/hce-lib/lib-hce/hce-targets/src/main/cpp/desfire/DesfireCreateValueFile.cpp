@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@ This file is part of HCE-LABORATORY.
 #include "Instance.h"
 #include "DesfireCreateValueFile.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireCreateValueFile::DesfireCreateValueFile(Instance &bundle) : Command(bundle)
 {
@@ -72,7 +72,7 @@ int DesfireCreateValueFile::process(rt::ByteBuffer &request, rt::ByteBuffer &res
       return DESFIRE_STATUS_PARAMETER_ERROR;
 
    // check limits
-   if (lowerLimit >= upperLimit)
+   if (lowerLimit > upperLimit)
       return DESFIRE_STATUS_PARAMETER_ERROR;
 
    // check limits
@@ -92,6 +92,7 @@ int DesfireCreateValueFile::process(rt::ByteBuffer &request, rt::ByteBuffer &res
       .value = initialValue,
       .lowerLimit = lowerLimit,
       .upperLimit = upperLimit,
+      .backupValue = initialValue,
       .features = limitedEnabled,
    };
 

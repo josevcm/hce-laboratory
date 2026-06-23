@@ -15,9 +15,10 @@ add_library(hw-dev STATIC
 
 target_include_directories(hw-dev PUBLIC ${PUBLIC_INCLUDE_DIR})
 target_include_directories(hw-dev PRIVATE ${PRIVATE_SOURCE_DIR})
+target_include_directories(hw-dev PRIVATE ${LIBUSB_INCLUDE_DIRS})
 
 if (WIN32)
     set(PLATFORM_LIBS winscard)
 endif (WIN32)
 
-target_link_libraries(hw-dev rt-lang ${PLATFORM_LIBS} ${LIBFTDI_LIBRARY})
+target_link_libraries(hw-dev rt-lang ${PLATFORM_LIBS} ${LIBFTDI_LIBRARIES})

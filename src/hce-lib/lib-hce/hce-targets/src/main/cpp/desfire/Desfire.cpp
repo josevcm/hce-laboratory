@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -40,8 +40,10 @@
 #include "DesfireChangeKeySettings.h"
 #include "DesfireGetKeySettings.h"
 #include "DesfireGetKeyVersion.h"
+#include "DesfireSetConfiguration.h"
 
 // --- PICC Level Commands ---
+#include "DesfireGetCardUID.h"
 #include "DesfireCreateApplication.h"
 #include "DesfireDeleteApplication.h"
 #include "DesfireFormatPICC.h"
@@ -59,6 +61,7 @@
 #include "DesfireDeleteFile.h"
 #include "DesfireGetFileSettings.h"
 #include "DesfireListFiles.h"
+#include "DesfireGetIsoFileIDs.h"
 
 // --- Data Manipulation Commands ---
 #include "DesfireAbortTransaction.h"
@@ -84,7 +87,7 @@
 
 using json = nlohmann::json;
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 // using CommandFn = std::function<int(rt::ByteBuffer &, rt::ByteBuffer &)>;
 
@@ -107,8 +110,10 @@ struct Desfire::Impl
    DesfireGetKeySettings getKeySettings;
    DesfireChangeKey changeKey;
    DesfireGetKeyVersion getKeyVersion;
+   DesfireSetConfiguration setConfiguration;
 
    // --- PICC Level Commands ---
+   DesfireGetCardUID getCardUID;
    DesfireCreateApplication createApplication;
    DesfireDeleteApplication deleteApplication;
    DesfireSelectApplication selectApplication;
@@ -126,6 +131,7 @@ struct Desfire::Impl
    DesfireCreateRecordFile createCyclicRecordFile;
    DesfireChangeFileSettings changeFileSettings;
    DesfireListFiles listFiles;
+   DesfireGetIsoFileIDs getIsoFileIDs;
    DesfireGetFileSettings getFileSettings;
    DesfireDeleteFile deleteFile;
 
@@ -172,8 +178,10 @@ struct Desfire::Impl
       getKeySettings(instance),
       changeKey(instance),
       getKeyVersion(instance),
+      setConfiguration(instance),
 
       // --- PICC Level Commands ---
+      getCardUID(instance),
       createApplication(instance),
       deleteApplication(instance),
       selectApplication(instance),
@@ -191,6 +199,7 @@ struct Desfire::Impl
       createCyclicRecordFile(instance, CyclicRecordFile),
       changeFileSettings(instance),
       listFiles(instance),
+      getIsoFileIDs(instance),
       getFileSettings(instance),
       deleteFile(instance),
 
@@ -339,6 +348,16 @@ struct Desfire::Impl
       instance.protocol = 0;
       instance.command = 0;
       instance.chaining = 0;
+      instance.dirty = false;
+
+      // when randomId is active, expose a fresh 4-byte random NFCID1 for anticollision;
+      // byte0=0x08 signals a random UID per ISO 14443-3 §6.4.4
+      // instance.uid (the real UID) is untouched so GetCardUID still returns it
+      if (instance.randomId)
+      {
+         targetUID = rt::ByteBuffer::random(4);
+         targetUID[0] = 0x08;
+      }
 
       // invalidate application and auth
       instance.invalidateAuth();
@@ -621,7 +640,7 @@ struct Desfire::Impl
          json application;
          application["aid"] = aid;
          application["keySettings1"] = app.keySettings;
-         application["keySettings2"] = app.cryptoMode << 6 | app.maximumKeys;
+         application["keySettings2"] = (app.cryptoMode << 6) | (app.isoEnabled ? 0x20 : 0x00) | app.maximumKeys;
 
          if (app.isoEnabled)
          {
@@ -669,8 +688,8 @@ struct Desfire::Impl
                   break;
 
                case ValueFile:
-                  file["lowerLimit"] = entry.recordSize;
-                  file["upperLimit"] = entry.recordLimit;
+                  file["lowerLimit"] = entry.lowerLimit;
+                  file["upperLimit"] = entry.upperLimit;
                   file["limitedCredit"] = entry.creditLimit;
                   file["value"] = entry.value;
                   break;
@@ -913,6 +932,9 @@ struct Desfire::Impl
                case DESFIRE_CMD_GET_KEY_SETTINGS:
                   status = getKeySettings.process(request, data);
                   break;
+               case DESFIRE_CMD_SET_CONFIGURATION:
+                  status = setConfiguration.process(request, data);
+                  break;
 
                // --- PICC Level Commands ---
                case DESFIRE_CMD_CREATE_APPLICATION:
@@ -936,6 +958,9 @@ struct Desfire::Impl
                case DESFIRE_CMD_GET_VERSION:
                   status = getVersion.process(request, data);
                   break;
+               case DESFIRE_CMD_GET_CARD_UID:
+                  status = getCardUID.process(request, data);
+                  break;
                case DESFIRE_CMD_FORMAT_PICC:
                   status = formatPICC.process(request, data);
                   break;
@@ -943,6 +968,9 @@ struct Desfire::Impl
                // --- Application Level Commands ---
                case DESFIRE_CMD_GET_FILE_IDS:
                   status = listFiles.process(request, data);
+                  break;
+               case DESFIRE_CMD_GET_ISO_FILE_IDS:
+                  status = getIsoFileIDs.process(request, data);
                   break;
                case DESFIRE_CMD_GET_FILE_SETTINGS:
                   status = getFileSettings.process(request, data);
@@ -1105,6 +1133,16 @@ int Desfire::process(const rt::ByteBuffer &request, rt::ByteBuffer &response)
    LOG_DEBUG(impl->log, "Desfire << {x} [{}]", {response, time});
 
    return res;
+}
+
+bool Desfire::isDirty() const
+{
+   return impl->instance.dirty;
+}
+
+void Desfire::clearDirty()
+{
+   impl->instance.dirty = false;
 }
 
 }

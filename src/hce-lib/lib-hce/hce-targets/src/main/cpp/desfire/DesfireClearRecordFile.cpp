@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@
 #include "Instance.h"
 #include "DesfireClearRecordFile.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireClearRecordFile::DesfireClearRecordFile(Instance &bundle) : Command(bundle)
 {
@@ -70,8 +70,11 @@ int DesfireClearRecordFile::process(rt::ByteBuffer &request, rt::ByteBuffer &res
    // mark file as cleared by setting backup as empty (but valid)
    file->backup = rt::ByteBuffer::zero(file->recordSize);
 
-   // empty record to mark as cleared
+   // after flip(): remaining=0, which commit() detects as "clear all records"
    file->backup.flip();
+
+   // mark file as dirty so commitTransaction() processes the clear
+   file->changes |= DESFIRE_FILE_CHANGED_DATA;
 
    // send successful response
    return picc.sendAck(response);

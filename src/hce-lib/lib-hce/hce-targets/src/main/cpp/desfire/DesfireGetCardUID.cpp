@@ -1,0 +1,52 @@
+﻿/*
+
+This file is part of HCE-LABORATORY.
+
+  Copyright (C) 2025 Jose Vicente Campos Martinez, <josevcm@gmail.com>
+
+  HCE-LABORATORY is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  HCE-LABORATORY is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with HCE-LABORATORY. If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+#include "Instance.h"
+#include "DesfireGetCardUID.h"
+
+namespace hce::targets::desfire {
+
+DesfireGetCardUID::DesfireGetCardUID(Instance &bundle) : Command(bundle)
+{
+}
+
+int DesfireGetCardUID::process(rt::ByteBuffer &request, rt::ByteBuffer &response)
+{
+   LOG_INFO(log, "getCardUID");
+
+   // authentication is required (any mode)
+   if (!picc.isAuthenticated())
+      return DESFIRE_STATUS_AUTHENTICATION_ERROR;
+
+   // update IV for CMAC chaining
+   picc.updateIv(request, 0);
+
+   // UID is 7 bytes, returned encrypted with current session key
+   rt::ByteBuffer data = picc.uid.copy();
+
+   picc.buffer.clear();
+   if (const int status = picc.encodeDataCrypto(data, picc.uid.remaining()); status != DESFIRE_STATUS_OK)
+      return status;
+
+   return picc.sendData(response);
+}
+
+}

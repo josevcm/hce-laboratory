@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -24,7 +24,7 @@
 
 #include <hce/Target.h>
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 enum DesfireType
 {
@@ -61,6 +61,10 @@ class Desfire final : public Target
       std::string raw() const override;
 
       int process(const rt::ByteBuffer &request, rt::ByteBuffer &response) override;
+
+      bool isDirty() const override;
+
+      void clearDirty() override;
 
    private:
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -24,7 +24,7 @@
 
 #include <rt/ByteBuffer.h>
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 enum KeyType
 {

@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -25,7 +25,7 @@
 
 #include "Command.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 struct FileEntry;
 

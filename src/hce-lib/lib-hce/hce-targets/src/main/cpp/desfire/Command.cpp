@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -21,7 +21,7 @@ This file is part of HCE-LABORATORY.
 
 #include "Command.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 Command::Command(Instance &instance) : picc(instance)
 {

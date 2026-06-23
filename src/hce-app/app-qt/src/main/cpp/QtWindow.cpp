@@ -20,6 +20,7 @@
 */
 
 #include <QDebug>
+#include <QColor>
 #include <QKeyEvent>
 #include <QClipboard>
 #include <QComboBox>
@@ -28,6 +29,8 @@
 #include <QScreen>
 #include <QDesktopServices>
 #include <QScrollBar>
+#include <QCoreApplication>
+#include <QFileInfo>
 
 #include <rt/Subject.h>
 
@@ -37,11 +40,17 @@
 #include <events/SystemStartupEvent.h>
 #include <events/ListenerFrameEvent.h>
 #include <events/ListenerStatusEvent.h>
+#include <events/TargetStateEvent.h>
+
+#include <hce/Frame.h>
 
 #include <model/ParserModel.h>
+#include <model/ProtocolModel.h>
 #include <model/StreamFilter.h>
 #include <model/StreamModel.h>
 #include <model/TargetModel.h>
+
+#include <protocol/DesfireParser.h>
 
 #include <styles/Theme.h>
 
@@ -82,6 +91,9 @@ struct QtWindow::Impl
    QString targetListenerName;
    bool targetListenerEnabled = false;
 
+   int selectedRootRow = -1; // row of the currently selected root card item in the tree
+   int pendingActiveRow = -1; // row passed with the last Start command
+
    // Target view model
    QPointer<TargetModel> targetModel;
 
@@ -91,6 +103,10 @@ struct QtWindow::Impl
    // Parser view model
    QPointer<ParserModel> parserModel;
 
+   // Per-target APDU protocol models
+   QVector<QPointer<ProtocolModel>> protocolModels;
+   QPointer<ProtocolModel> protocolFallbackModel;
+
    // Frame filter
    QPointer<StreamFilter> streamFilter;
 
@@ -98,31 +114,147 @@ struct QtWindow::Impl
    QPointer<QTimer> refreshTimer;
 
    // signal connections
+   QMetaObject::Connection targetTreeSelectionChangedConnection;
    QMetaObject::Connection decodeViewDoubleClickedConnection;
+   QMetaObject::Connection protocolViewDoubleClickedConnection;
+   QMetaObject::Connection protocolViewSelectionChangedConnection;
    QMetaObject::Connection decodeViewSelectionChangedConnection;
    QMetaObject::Connection decodeViewValueChangedConnection;
    QMetaObject::Connection decodeViewIndicatorChangedConnection;
    QMetaObject::Connection parserViewSelectionChangedConnection;
    QMetaObject::Connection refreshTimerTimeoutConnection;
 
+   bool syncingSelection = false;
+
    explicit Impl(QtWindow *window) : window(window),
                                      ui(new Ui_QtWindow()),
                                      targetModel(new TargetModel()),
                                      streamModel(new StreamModel()),
                                      parserModel(new ParserModel()),
+                                     protocolFallbackModel(new ProtocolModel()),
                                      streamFilter(new StreamFilter()),
                                      refreshTimer(new QTimer())
    {
    }
 
+   void ensureProtocolModels()
+   {
+      const int rootCount = targetModel->rowCount({});
+
+      while (protocolModels.size() < static_cast<qsizetype>(rootCount))
+         protocolModels.append(new ProtocolModel(window));
+   }
+
+   ProtocolModel *protocolModelForRow(int row)
+   {
+      if (row < 0)
+         return protocolFallbackModel;
+
+      ensureProtocolModels();
+
+      if (row >= static_cast<int>(protocolModels.size()) || protocolModels[row].isNull())
+         return protocolFallbackModel;
+
+      return protocolModels[row];
+   }
+
+   void showProtocolModel(int row)
+   {
+      ui->targetProtocolTable->setModel(protocolModelForRow(row));
+
+      disconnect(protocolViewSelectionChangedConnection);
+
+      if (ui->targetProtocolTable->selectionModel())
+      {
+         protocolViewSelectionChangedConnection = connect(
+            ui->targetProtocolTable->selectionModel(),
+            &QItemSelectionModel::selectionChanged,
+            [=](const QItemSelection &selected, const QItemSelection &deselected) {
+               protocolSelectionChanged(selected, deselected);
+            });
+      }
+   }
+
    ~Impl()
    {
+      disconnect(targetTreeSelectionChangedConnection);
       disconnect(decodeViewIndicatorChangedConnection);
       disconnect(decodeViewValueChangedConnection);
       disconnect(decodeViewSelectionChangedConnection);
       disconnect(decodeViewDoubleClickedConnection);
+      disconnect(protocolViewDoubleClickedConnection);
+      disconnect(protocolViewSelectionChangedConnection);
       disconnect(parserViewSelectionChangedConnection);
       disconnect(refreshTimerTimeoutConnection);
+   }
+
+   QModelIndex findStreamIndexByTime(const qulonglong frameTime, const hce::FrameType frameType) const
+   {
+      if (frameTime == 0)
+         return {};
+
+      for (int row = 0; row < streamFilter->rowCount(); ++row)
+      {
+         const QModelIndex candidate = streamFilter->index(row, 0);
+         const hce::Frame *frame = streamFilter->frame(candidate);
+
+         if (!frame)
+            continue;
+
+         if (frame->frameTime() == frameTime && frame->frameType() == frameType)
+            return candidate;
+      }
+
+      return {};
+   }
+
+   void protocolSelectionChanged(const QItemSelection &selected, const QItemSelection &)
+   {
+      if (syncingSelection || selected.isEmpty())
+         return;
+
+      const QModelIndex protocolIndex = selected.indexes().first();
+      const QModelIndex requestIndex = protocolIndex.sibling(protocolIndex.row(), ProtocolModel::Time);
+      const qulonglong requestTime = requestIndex.data(ProtocolModel::RequestTimeRole).toULongLong();
+
+      const QModelIndex requestStreamIndex = findStreamIndexByTime(requestTime, hce::FrameType::NfcRequestFrame);
+      if (!requestStreamIndex.isValid())
+         return;
+
+      syncingSelection = true;
+
+      QItemSelection streamSelection;
+
+      if (requestStreamIndex.isValid())
+         streamSelection.select(requestStreamIndex, requestStreamIndex.sibling(requestStreamIndex.row(), StreamModel::Data));
+
+      ui->decodeView->selectionModel()->select(streamSelection, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+      ui->decodeView->setCurrentIndex(requestStreamIndex);
+      ui->decodeView->scrollTo(requestStreamIndex, QAbstractItemView::PositionAtCenter);
+
+      syncingSelection = false;
+   }
+
+   static QString rawHex(const QByteArray &data)
+   {
+      if (data.isEmpty())
+         return "<empty>";
+
+      return data.toHex(' ').toUpper();
+   }
+
+   static QString multilineParts(const QString &value, const QString &empty = "<none>")
+   {
+      if (value.trimmed().isEmpty())
+         return empty;
+
+      QStringList lines;
+      const QStringList parts = value.split(" | ", Qt::SkipEmptyParts);
+
+      for (const QString &part: parts)
+         lines << QString("- %1").arg(part.trimmed());
+
+      return lines.join("\n");
    }
 
    void setupUi()
@@ -157,6 +289,24 @@ struct QtWindow::Impl
       ui->targetTree->setModel(targetModel);
       ui->targetTree->setColumnWidth(TargetModel::Name, 250);
       ui->targetTree->setColumnWidth(TargetModel::Type, 150);
+
+      // setup info table
+      ui->targetInfoTable->setColumnWidth(0, 130);
+
+      // setup protocol table
+      showProtocolModel(-1);
+      ui->targetProtocolTable->setColumnWidth(ProtocolModel::Time, 175);
+      ui->targetProtocolTable->setColumnWidth(ProtocolModel::Command, 150);
+      ui->targetProtocolTable->setColumnWidth(ProtocolModel::Status, 100);
+      ui->targetProtocolTable->setColumnWidth(ProtocolModel::Detail, 420);
+      ui->targetProtocolTable->setColumnType(ProtocolModel::Time, StreamWidget::DateTime);
+      ui->targetProtocolTable->setColumnType(ProtocolModel::Command, StreamWidget::String);
+      ui->targetProtocolTable->setColumnType(ProtocolModel::Status, StreamWidget::String);
+      ui->targetProtocolTable->setColumnType(ProtocolModel::Detail, StreamWidget::String);
+      ui->targetProtocolTable->setSortingEnabled(ProtocolModel::Time, true);
+      ui->targetProtocolTable->setSortingEnabled(ProtocolModel::Command, true);
+      ui->targetProtocolTable->setSortingEnabled(ProtocolModel::Status, true);
+      ui->targetProtocolTable->setSortingEnabled(ProtocolModel::Detail, true);
 
       // setup frame view model
       ui->decodeView->setModel(streamFilter);
@@ -205,6 +355,11 @@ struct QtWindow::Impl
          updateInspectDialog(index);
       });
 
+      // show raw APDU payloads for selected protocol row
+      protocolViewDoubleClickedConnection = connect(ui->targetProtocolTable, &QTableView::doubleClicked, [=](const QModelIndex &index) {
+         protocolDoubleClicked(index);
+      });
+
       // connect stream view selection signal
       decodeViewSelectionChangedConnection = connect(ui->decodeView->selectionModel(), &QItemSelectionModel::selectionChanged, [=](const QItemSelection &selected, const QItemSelection &deselected) {
          decoderSelectionChanged(selected, deselected);
@@ -230,6 +385,11 @@ struct QtWindow::Impl
          refreshView();
       });
 
+      // connect target tree selection to hex view and info table
+      targetTreeSelectionChangedConnection = connect(ui->targetTree->selectionModel(), &QItemSelectionModel::selectionChanged, [=](const QItemSelection &selected, const QItemSelection &) {
+         targetSelectionChanged(selected);
+      });
+
       // start timer
       refreshTimer->start(500);
    }
@@ -237,6 +397,8 @@ struct QtWindow::Impl
    // event handlers
    void systemStartupEvent(SystemStartupEvent *event)
    {
+      loadDefaultTarget();
+
       // update actions status
       updateActions();
 
@@ -260,6 +422,13 @@ struct QtWindow::Impl
       if (event->frame().isValid())
       {
          streamModel->append(event->frame());
+
+         if (pendingActiveRow >= 0 && pendingActiveRow < protocolModels.size() &&
+            (event->frame().frameType() == hce::FrameType::NfcRequestFrame ||
+               event->frame().frameType() == hce::FrameType::NfcResponseFrame))
+         {
+            protocolModels[pendingActiveRow]->append(event->frame());
+         }
       }
    }
 
@@ -277,7 +446,26 @@ struct QtWindow::Impl
       {
          updateStatus();
          updateActions();
+
+         // sync tree item availability with emulation state
+         if (targetListenerStatus == ListenerStatusEvent::Listening)
+            targetModel->setActiveTarget(pendingActiveRow);
+         else
+            targetModel->clearActiveTarget();
       }
+   }
+
+   void targetStateEvent(TargetStateEvent *event)
+   {
+      if (pendingActiveRow < 0)
+         return;
+
+      const QJsonObject &content = event->content();
+
+      if (content.isEmpty())
+         return;
+
+      targetModel->updateContent(pendingActiveRow, content);
    }
 
    /*
@@ -349,6 +537,7 @@ struct QtWindow::Impl
       const bool targetListenerDevicePresent = targetListenerStatus != ListenerStatusEvent::Absent;
       const bool targetListenerDeviceEnabled = targetListenerStatus != ListenerStatusEvent::Disabled;
       const bool targetListenerDeviceListening = targetListenerStatus == ListenerStatusEvent::Listening;
+      const bool targetSelected = selectedRootRow >= 0;
 
       // disable / enable actions based on streaming status
       if (targetListenerDeviceListening)
@@ -360,9 +549,11 @@ struct QtWindow::Impl
       else
       {
          // reset actions to default state
-         ui->actionListen->setEnabled(targetListenerDevicePresent && targetListenerDeviceEnabled);
+         ui->actionListen->setEnabled(targetListenerDevicePresent && targetListenerDeviceEnabled && targetSelected);
          ui->actionStop->setEnabled(false);
       }
+
+      ui->actionSave->setEnabled(targetSelected);
    }
 
    void updateStatus() const
@@ -392,8 +583,110 @@ struct QtWindow::Impl
       QApplication::clipboard()->setText(clipboard);
    }
 
+   void targetSelectionChanged(const QItemSelection &selected)
+   {
+      // clear both panels
+      ui->targetHexView->clear();
+      ui->targetInfoTable->clearContents();
+      ui->targetInfoTable->setRowCount(0);
+
+      if (selected.isEmpty())
+      {
+         showProtocolModel(-1);
+         return;
+      }
+
+      QModelIndex index = selected.indexes().first();
+      QModelIndex rootIndex = index;
+
+      while (rootIndex.parent().isValid())
+         rootIndex = rootIndex.parent();
+
+      showProtocolModel(rootIndex.row());
+
+      // update hex view (BytesRole)
+      QByteArray bytes = index.data(TargetModel::BytesRole).toByteArray();
+
+      if (!bytes.isEmpty())
+         ui->targetHexView->setData(bytes);
+
+      // track root card item selection and refresh action state
+      if (rootIndex.isValid() && !rootIndex.data(TargetModel::JsonRole).toString().isEmpty())
+      {
+         selectedRootRow = rootIndex.row();
+         updateActions();
+      }
+
+      // update info table (InfoRole)
+      QVariantList info = index.data(TargetModel::InfoRole).toList();
+
+      if (info.isEmpty())
+         return;
+
+      ui->targetInfoTable->setRowCount(info.size());
+
+      for (int row = 0; row < info.size(); ++row)
+      {
+         QVariantList pair = info[row].toList();
+         auto *nameItem = new QTableWidgetItem(pair.value(0).toString());
+         auto *valueItem = new QTableWidgetItem(pair.value(1).toString());
+
+         if (pair.size() > 2 && pair.value(2).toBool())
+         {
+            const QColor warningColor(0xE5, 0x39, 0x35);
+            nameItem->setForeground(warningColor);
+            valueItem->setForeground(warningColor);
+         }
+
+         ui->targetInfoTable->setItem(row, 0, nameItem);
+         ui->targetInfoTable->setItem(row, 1, valueItem);
+      }
+   }
+
    void decoderSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
    {
+      if (syncingSelection || selected.isEmpty())
+         return;
+
+      const QModelIndex streamIndex = selected.indexes().first();
+      const hce::Frame *frame = streamFilter->frame(streamIndex);
+
+      if (!frame)
+         return;
+
+      auto *model = dynamic_cast<ProtocolModel *>(ui->targetProtocolTable->model());
+
+      if (!model)
+         return;
+
+      const bool isRequest = frame->frameType() == hce::FrameType::NfcRequestFrame;
+      const bool isResponse = frame->frameType() == hce::FrameType::NfcResponseFrame;
+
+      if (!isRequest && !isResponse)
+         return;
+
+      const int role = isRequest ? ProtocolModel::RequestTimeRole : ProtocolModel::ResponseTimeRole;
+      QModelIndex protocolMatch;
+
+      for (int row = 0; row < model->rowCount(); ++row)
+      {
+         const QModelIndex candidate = model->index(row, ProtocolModel::Time);
+
+         if (candidate.data(role).toULongLong() == frame->frameTime())
+         {
+            protocolMatch = candidate;
+            break;
+         }
+      }
+
+      if (!protocolMatch.isValid())
+         return;
+
+      syncingSelection = true;
+      ui->targetProtocolTable->selectionModel()->select(protocolMatch, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+      ui->targetProtocolTable->setCurrentIndex(protocolMatch);
+      ui->targetProtocolTable->scrollTo(protocolMatch, QAbstractItemView::PositionAtCenter);
+      syncingSelection = false;
    }
 
    void decoderScrollChanged(int value)
@@ -408,6 +701,47 @@ struct QtWindow::Impl
 
    void parserSelectionChanged() const
    {
+   }
+
+   void protocolDoubleClicked(const QModelIndex &index) const
+   {
+      if (!index.isValid())
+         return;
+
+      const QModelIndex timeIndex = index.sibling(index.row(), ProtocolModel::Time);
+      const QModelIndex commandIndex = index.sibling(index.row(), ProtocolModel::Command);
+      const QModelIndex statusIndex = index.sibling(index.row(), ProtocolModel::Status);
+      const QModelIndex infoIndex = index.sibling(index.row(), ProtocolModel::Detail);
+
+      const QByteArray rawRequest = index.data(ProtocolModel::RawRequestRole).toByteArray();
+      const QByteArray rawResponse = index.data(ProtocolModel::RawResponseRole).toByteArray();
+
+      const auto request = DesfireParser::parseRequest(rawRequest);
+      const auto response = DesfireParser::parseResponse(rawResponse, request);
+
+      const QString requestTransport = request.summary.isEmpty() ? "<unknown>" : request.summary;
+      const QString requestParams = multilineParts(request.params);
+
+      const QString responseStatus = response.status.isEmpty() ? statusIndex.data().toString() : response.status;
+      const QString responseMeaning = multilineParts(response.summary);
+      const QString responseParams = multilineParts(response.params);
+
+      const QString text = QString("Time: %1\nCommand: %2\nStatus: %3\nInfo: %4\n\nREQUEST\nTransport: %5\nParameters:\n%6\nAPDU (%7 bytes):\n%8\n\nRESPONSE\nStatus word: %9\nMeaning:\n%10\nParameters:\n%11\nAPDU (%12 bytes):\n%13")
+         .arg(timeIndex.data().toString())
+         .arg(commandIndex.data().toString())
+         .arg(statusIndex.data().toString())
+         .arg(infoIndex.data().toString())
+         .arg(requestTransport)
+         .arg(requestParams)
+         .arg(rawRequest.size())
+         .arg(rawHex(rawRequest))
+         .arg(responseStatus)
+         .arg(responseMeaning)
+         .arg(responseParams)
+         .arg(rawResponse.size())
+         .arg(rawHex(rawResponse));
+
+      Theme::messageDialog(window, tr("Protocol APDU"), text);
    }
 
    void refreshView() const
@@ -438,31 +772,150 @@ struct QtWindow::Impl
 
       QDir dataPath = QtApplication::dataPath();
 
-      QString fileName = Theme::openFileDialog(window, tr("Open trace file"), dataPath.absolutePath(), tr("Capture (*.wav *.trz)"));
+      QStringList fileNames = Theme::openFilesDialog(window, tr("Open target files"), dataPath.absolutePath(), tr("Target files (*.json)"));
+
+      if (fileNames.isEmpty())
+         return;
+
+      bool anyLoaded = false;
+
+      for (const QString &fileName: fileNames)
+      {
+         if (fileName.endsWith(".json"))
+         {
+            if (!targetModel->load(fileName))
+            {
+               Theme::messageDialog(window, tr("Unable to open file"), tr("Invalid or unsupported target file:\n%1").arg(fileName));
+               continue;
+            }
+
+            qInfo().noquote() << "target loaded:" << fileName;
+            anyLoaded = true;
+         }
+         else
+         {
+            Theme::messageDialog(window, tr("Unable to open file"), tr("Unsupported file format:\n%1").arg(fileName));
+         }
+      }
+
+      if (anyLoaded)
+      {
+         ensureProtocolModels();
+         updateActions();
+      }
+   }
+
+   bool loadDefaultTarget()
+   {
+      const QString fileName = resolveDefaultTargetFile();
+
+      if (fileName.isEmpty())
+      {
+         Theme::messageDialog(
+            window,
+            tr("Default target not found"),
+            tr("Cannot find default target file:\n%1").arg("desfire-factory.json"));
+         return false;
+      }
+
+      // Force the default target on each startup.
+      targetModel->resetModel();
+      selectedRootRow = -1;
+      pendingActiveRow = -1;
+
+      if (!targetModel->load(fileName))
+      {
+         Theme::messageDialog(
+            window,
+            tr("Unable to load default target"),
+            tr("Invalid or unsupported target file:\n%1").arg(fileName));
+         return false;
+      }
+
+      ensureProtocolModels();
+      selectDefaultTarget();
+      updateActions();
+
+      qInfo().noquote() << "default target loaded:" << fileName;
+      return true;
+   }
+
+   QString resolveDefaultTargetFile() const
+   {
+      const QString relativePath = "targets/desfire/desfire-factory.json";
+      const QDir appDir(QCoreApplication::applicationDirPath());
+      const QStringList candidates = {
+         QtApplication::dataPath().absoluteFilePath(relativePath),
+         appDir.absoluteFilePath(relativePath),
+         appDir.absoluteFilePath("../" + relativePath),
+         QDir::current().absoluteFilePath(relativePath),
+         QDir::current().absoluteFilePath("../../" + relativePath)
+      };
+
+      for (const QString &candidate: candidates)
+      {
+         if (QFileInfo::exists(candidate))
+            return candidate;
+      }
+
+      return {};
+   }
+
+   void selectDefaultTarget() const
+   {
+      const QModelIndex rootIndex = targetModel->index(0, 0, {});
+
+      if (!rootIndex.isValid())
+         return;
+
+      QModelIndex preferredIndex = rootIndex;
+
+      if (targetModel->rowCount(rootIndex) > 0)
+         preferredIndex = targetModel->index(0, 0, rootIndex);
+
+      ui->targetTree->expand(rootIndex);
+      ui->targetTree->setCurrentIndex(preferredIndex);
+      ui->targetTree->selectionModel()->select(preferredIndex, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+      ui->targetTree->scrollTo(preferredIndex);
+   }
+
+   void saveFile() const
+   {
+      if (selectedRootRow < 0)
+         return;
+
+      QModelIndex rootIndex = targetModel->index(selectedRootRow, 0, {});
+      QString json = rootIndex.data(TargetModel::JsonRole).toString();
+
+      if (json.isEmpty())
+         return;
+
+      QDir dataPath = QtApplication::dataPath();
+
+      QString fileName = Theme::saveFileDialog(window, tr("Save target file"), dataPath.absolutePath(), tr("Target files (*.json)"));
 
       if (fileName.isEmpty())
          return;
 
-      if (!(fileName.endsWith(".wav") || fileName.endsWith(".trz")))
+      QJsonParseError parseError;
+      QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &parseError);
+
+      if (doc.isNull())
       {
-         Theme::messageDialog(window, tr("Unable to open file"), tr("Invalid file name: %1").arg(fileName));
+         Theme::messageDialog(window, tr("Unable to save file"), tr("Internal error: invalid target JSON."));
          return;
       }
 
       QFile file(fileName);
 
-      if (!file.open(QIODevice::ReadOnly))
+      if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
       {
-         Theme::messageDialog(window, tr("Unable to open file"), file.errorString());
+         Theme::messageDialog(window, tr("Unable to save file"), tr("Cannot open file for writing:\n%1").arg(fileName));
          return;
       }
 
-      clearView();
-   }
-
-   void saveFile() const
-   {
-      qInfo() << "save signal trace";
+      file.write(doc.toJson(QJsonDocument::Indented));
+      qInfo().noquote() << "target saved:" << fileName;
    }
 
    void openConfig() const
@@ -484,6 +937,17 @@ struct QtWindow::Impl
    {
       qInfo() << "listener starting";
 
+      QModelIndex rootIndex = targetModel->index(selectedRootRow, 0, {});
+      QString json = rootIndex.data(TargetModel::JsonRole).toString();
+
+      if (json.isEmpty())
+         return;
+
+      pendingActiveRow = selectedRootRow;
+
+      if (auto *model = protocolModelForRow(pendingActiveRow))
+         model->resetModel();
+
       // disable action to avoid multiple start
       ui->actionListen->setEnabled(false);
 
@@ -493,12 +957,12 @@ struct QtWindow::Impl
       // enable follow
       setFollowEnabled(true);
 
-      // start listener
-      // QtApplication::post(new ListenerControlEvent(ListenerControlEvent::Start));
+      const int protocolTabIndex = ui->upperTabs->indexOf(ui->targetProtocol);
 
-      QtApplication::post(new ListenerControlEvent(ListenerControlEvent::Start, {
-                                                      {"fileName", "targets/desfire/desfire-factory.json"}
-                                                   }));
+      if (protocolTabIndex >= 0)
+         ui->upperTabs->setCurrentIndex(protocolTabIndex);
+
+      QtApplication::post(new ListenerControlEvent(ListenerControlEvent::Start, "targetJson", json));
    }
 
    void toggleStop()
@@ -644,7 +1108,7 @@ struct QtWindow::Impl
    }
 };
 
-QtWindow::QtWindow() : impl(new Impl(this))
+QtWindow::QtWindow() : impl(std::make_unique<Impl>(this))
 {
    // configure window properties
    setAttribute(Qt::WA_OpaquePaintEvent, true);
@@ -760,6 +1224,8 @@ void QtWindow::handleEvent(QEvent *event)
       impl->listenerFrameEvent(dynamic_cast<ListenerFrameEvent *>(event));
    else if (event->type() == ListenerStatusEvent::Type)
       impl->listenerStatusEvent(dynamic_cast<ListenerStatusEvent *>(event));
+   else if (event->type() == TargetStateEvent::Type)
+      impl->targetStateEvent(dynamic_cast<TargetStateEvent *>(event));
 }
 
 void QtWindow::closeEvent(QCloseEvent *event)

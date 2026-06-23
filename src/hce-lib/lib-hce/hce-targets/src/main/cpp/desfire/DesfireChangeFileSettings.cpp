@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@
 #include "Instance.h"
 #include "DesfireChangeFileSettings.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireChangeFileSettings::DesfireChangeFileSettings(Instance &bundle) : Command(bundle)
 {
@@ -56,7 +56,7 @@ int DesfireChangeFileSettings::process(rt::ByteBuffer &request, rt::ByteBuffer &
    FileEntry *file = picc.getFile(fileId);
 
    // receive command data
-   if (const int status = picc.decodeData(request, 3, CryptCommunication, {file->changeKey()}); status != DESFIRE_STATUS_OK)
+   if (const int status = picc.decodeData(request, 3, CryptCommunication, {file->changeRightsKey()}); status != DESFIRE_STATUS_OK)
       return status;
 
    // read new settings
@@ -68,6 +68,9 @@ int DesfireChangeFileSettings::process(rt::ByteBuffer &request, rt::ByteBuffer &
 
    file->commSettings = commSettings;
    file->accessRights = accessRights;
+
+   // set picc as dirty state
+   picc.dirty = true;
 
    // send successful response
    return picc.sendAck(response);

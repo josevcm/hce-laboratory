@@ -40,7 +40,7 @@ class CipherDES : public Cipher
 
       enum Mode
       {
-         Iso, Legacy
+         Iso, CBCRecv, CBCSend
       };
 
    public:

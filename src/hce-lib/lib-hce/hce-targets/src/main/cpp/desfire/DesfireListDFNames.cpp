@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@ This file is part of HCE-LABORATORY.
 #include "Instance.h"
 #include "DesfireListDFNames.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireListDFNames::DesfireListDFNames(Instance &bundle) : Command(bundle)
 {
@@ -58,8 +58,8 @@ int DesfireListDFNames::process(rt::ByteBuffer &request, rt::ByteBuffer &respons
          LOG_INFO(log, "\tfid: 0x{04x}", {df.isoId});
          LOG_INFO(log, "\tname: 0x{x}", {df.name});
 
-         data.putInt(df.appId, 3, rt::ByteBuffer::LittleEndian);
-         data.putInt(df.isoId, 2, rt::ByteBuffer::BigEndian);
+         data.putInt(df.appId, 3);
+         data.putInt(df.isoId, 2);
          data.put(df.name);
       }
 

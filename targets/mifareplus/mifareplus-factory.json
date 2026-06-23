@@ -1,0 +1,26 @@
+{
+  "type": "mifareplus",
+  "version": 1,
+  "discovery": {
+    "ATQA": 66,
+    "SAK": 32,
+    "UID": "04AABBCCDDEE01",
+    "ATS": { "TB1": 129, "TC1": 2, "HB": "C1" }
+  },
+  "payload": {
+    "size": "2K",
+    "sectors": [
+      {
+        "sector": 0,
+        "keyA": "00000000000000000000000000000000",
+        "keyB": "00000000000000000000000000000000",
+        "accessBits": "FF078069",
+        "blocks": [
+          { "block": 0, "data": "0484AABBCCDDEEFF0000000000000000" },
+          { "block": 1, "data": "00000000000000000000000000000000" },
+          { "block": 2, "data": "00000000000000000000000000000000" }
+        ]
+      }
+    ]
+  }
+}

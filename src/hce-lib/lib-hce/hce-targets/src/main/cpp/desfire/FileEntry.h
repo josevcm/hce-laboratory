@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -33,7 +33,8 @@ This file is part of HCE-LABORATORY.
 #define DESFIRE_FILE_CHANGED_DEBIT  0x02
 #define DESFIRE_FILE_CHANGED_CREDIT 0x04
 
-namespace hce::targets {
+namespace hce::targets::desfire {
+
 enum FileType
 {
    StandardFile = 0x00,
@@ -180,7 +181,7 @@ struct FileEntry
    /*
     * get change key
     */
-   unsigned int changeKey() const
+   unsigned int changeRightsKey() const
    {
       return accessRights & 0x0F;
    }
@@ -227,7 +228,7 @@ struct FileEntry
 
    void limitedCredit(const int v)
    {
-      assert(v <= backupCreditLimit);
+      assert(v <= allowedCreditLimit());
       backupValue += v;
       backupCreditLimit = 0;
       changes |= DESFIRE_FILE_CHANGED_CREDIT;

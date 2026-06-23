@@ -57,12 +57,12 @@ struct ProtocolFrame::Impl
 };
 
 ProtocolFrame::ProtocolFrame(const QVector<QVariant> &data, int flags, const hce::Frame &frame) :
-   QObject(nullptr), impl(new Impl(flags, data, frame))
+   QObject(nullptr), impl(std::make_unique<Impl>(flags, data, frame))
 {
 }
 
 ProtocolFrame::ProtocolFrame(const QVector<QVariant> &data, int flags, ProtocolFrame *parent, int start, int end) :
-   QObject(parent), impl(new Impl(flags, data, parent, start, end))
+   QObject(parent), impl(std::make_unique<Impl>(flags, data, parent, start, end))
 {
 }
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@ This file is part of HCE-LABORATORY.
 #include "Instance.h"
 #include "DesfireCreateRecordFile.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireCreateRecordFile::DesfireCreateRecordFile(Instance &bundle, unsigned int type) : Command(bundle), fileType(type)
 {

@@ -427,7 +427,7 @@ struct StreamMenu::Impl
 
 const QRegularExpression StreamMenu::Impl::hexString("^[0-9A-Fa-f]+$");
 
-StreamMenu::StreamMenu(StreamFilter *filter, int section, StreamHeader *streamHeader) : QMenu(streamHeader), impl(new Impl(this, filter, section, streamHeader))
+StreamMenu::StreamMenu(StreamFilter *filter, int section, StreamHeader *streamHeader) : QMenu(streamHeader), impl(std::make_unique<Impl>(this, filter, section, streamHeader))
 {
 }
 

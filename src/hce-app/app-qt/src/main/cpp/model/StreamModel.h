@@ -88,6 +88,7 @@ class StreamModel : public QAbstractTableModel
 
       const hce::Frame *frame(const QModelIndex &index) const;
 
+
    signals:
 
       void modelChanged();

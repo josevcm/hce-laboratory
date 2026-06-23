@@ -16,6 +16,7 @@ add_library(hce-targets STATIC
 
         # Security Related Commands ---
         src/main/cpp/desfire/DesfireAuthenticate.cpp
+        src/main/cpp/desfire/DesfireSetConfiguration.cpp
         src/main/cpp/desfire/DesfireAuthenticateAES.cpp
         src/main/cpp/desfire/DesfireAuthenticateISO.cpp
         src/main/cpp/desfire/DesfireChangeKey.cpp
@@ -24,6 +25,7 @@ add_library(hce-targets STATIC
         src/main/cpp/desfire/DesfireGetKeyVersion.cpp
 
         # PICC Level Commands ---
+        src/main/cpp/desfire/DesfireGetCardUID.cpp
         src/main/cpp/desfire/DesfireCreateApplication.cpp
         src/main/cpp/desfire/DesfireDeleteApplication.cpp
         src/main/cpp/desfire/DesfireSelectApplication.cpp
@@ -38,6 +40,7 @@ add_library(hce-targets STATIC
         src/main/cpp/desfire/DesfireCreateRecordFile.cpp
         src/main/cpp/desfire/DesfireCreateValueFile.cpp
         src/main/cpp/desfire/DesfireListFiles.cpp
+        src/main/cpp/desfire/DesfireGetIsoFileIDs.cpp
         src/main/cpp/desfire/DesfireDeleteFile.cpp
         src/main/cpp/desfire/DesfireChangeFileSettings.cpp
         src/main/cpp/desfire/DesfireGetFileSettings.cpp
@@ -65,7 +68,24 @@ add_library(hce-targets STATIC
         src/main/cpp/desfire/DesfireIsoAuthentication.cpp
 
         # MifarePlus implementation  ---
+        src/main/cpp/mifareplus/Command.cpp
+        src/main/cpp/mifareplus/Instance.cpp
         src/main/cpp/mifareplus/MifarePlus.cpp
+        src/main/cpp/mifareplus/MifarePlusResetAuth.cpp
+        src/main/cpp/mifareplus/MifarePlusFirstAuth.cpp
+        src/main/cpp/mifareplus/MifarePlusFollowingAuth.cpp
+        src/main/cpp/mifareplus/MifarePlusRead.cpp
+        src/main/cpp/mifareplus/MifarePlusReadEncrypted.cpp
+        src/main/cpp/mifareplus/MifarePlusWrite.cpp
+        src/main/cpp/mifareplus/MifarePlusWriteEncrypted.cpp
+        src/main/cpp/mifareplus/MifarePlusIncrement.cpp
+        src/main/cpp/mifareplus/MifarePlusDecrement.cpp
+        src/main/cpp/mifareplus/MifarePlusRestore.cpp
+        src/main/cpp/mifareplus/MifarePlusTransfer.cpp
+        src/main/cpp/mifareplus/MifarePlusIncrementTransfer.cpp
+        src/main/cpp/mifareplus/MifarePlusDecrementTransfer.cpp
+        src/main/cpp/mifareplus/MifarePlusRestoreTransfer.cpp
+        src/main/cpp/mifareplus/MifarePlusGetUID.cpp
 )
 
 target_include_directories(hce-targets PUBLIC ${PUBLIC_INCLUDE_DIR})

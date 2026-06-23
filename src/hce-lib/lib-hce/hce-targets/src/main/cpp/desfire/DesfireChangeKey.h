@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -27,7 +27,7 @@ This file is part of HCE-LABORATORY.
 #include "Command.h"
 #include "Instance.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 class DesfireChangeKey final : public Command
 {

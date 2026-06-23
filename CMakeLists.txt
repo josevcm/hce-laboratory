@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.21)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -35,36 +35,21 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
 endif ()
 
 #-------------------------------------------------------------------------------
+# find package manager
+#-------------------------------------------------------------------------------
+find_package(PkgConfig REQUIRED)
+
+#-------------------------------------------------------------------------------
 # find dependency libusb-1.0
 #-------------------------------------------------------------------------------
-find_package(libusb-1.0)
-
-if(NOT LIBUSB_FOUND)
-  message(FATAL_ERROR  "Please install libusb-1.0!")
-endif()
-
-message(STATUS "libusb-1.0: found and using dynamic link mode")
-message(STATUS "  include: " ${LIBUSB_INCLUDE})
-message(STATUS "  library: " ${LIBUSB_LIBRARY})
-
-include_directories(${LIBUSB_INCLUDE})
+pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
 
 #-------------------------------------------------------------------------------
 # find dependency ftdi1
 #-------------------------------------------------------------------------------
-find_package(libftdi1)
-
-if(LIBFTDI_FOUND)
-  message(STATUS "libftdi1: found and using dynamic link mode")
-  message(STATUS "  include: " ${LIBFTDI_INCLUDE})
-  message(STATUS "  library: " ${LIBFTDI_LIBRARY})
-  include_directories(${LIBFTDI_INCLUDE})
-else ()
-  message(STATUS  "libftdi1: not found, using local bundle in static mode")
-endif()
+pkg_check_modules(LIBFTDI REQUIRED libftdi1)
 
 #-------------------------------------------------------------------------------
 # configure resources
 #-------------------------------------------------------------------------------
 add_subdirectory(src)
-

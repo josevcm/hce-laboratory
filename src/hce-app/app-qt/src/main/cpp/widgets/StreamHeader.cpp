@@ -91,7 +91,7 @@ struct StreamHeader::Impl
    }
 };
 
-StreamHeader::StreamHeader(StreamWidget *parent) : QHeaderView(Qt::Horizontal, parent), impl(new Impl(parent, this))
+StreamHeader::StreamHeader(StreamWidget *parent) : QHeaderView(Qt::Horizontal, parent), impl(std::make_unique<Impl>(parent, this))
 {
    setSortIndicatorShown(true);
    setSectionsClickable(true);

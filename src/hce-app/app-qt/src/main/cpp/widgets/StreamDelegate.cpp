@@ -95,7 +95,7 @@ struct StreamDelegate::Impl
    }
 };
 
-StreamDelegate::StreamDelegate(StreamWidget *parent) : QStyledItemDelegate(parent), impl(new Impl(parent))
+StreamDelegate::StreamDelegate(StreamWidget *parent) : QStyledItemDelegate(parent), impl(std::make_unique<Impl>(parent))
 {
    setObjectName("StreamDelegate");
 }

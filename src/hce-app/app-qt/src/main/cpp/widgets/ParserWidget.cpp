@@ -31,7 +31,7 @@ struct ParserWidget::Impl
    }
 };
 
-ParserWidget::ParserWidget(QWidget *parent) : QTreeView(parent), impl(new Impl(this))
+ParserWidget::ParserWidget(QWidget *parent) : QTreeView(parent), impl(std::make_unique<Impl>(this))
 {
    setItemDelegate(new ParserDelegate(this));
 }

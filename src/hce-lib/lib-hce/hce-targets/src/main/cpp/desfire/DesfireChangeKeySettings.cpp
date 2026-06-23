@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -24,7 +24,7 @@
 #include "Instance.h"
 #include "DesfireChangeKeySettings.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireChangeKeySettings::DesfireChangeKeySettings(Instance &bundle) : Command(bundle)
 {

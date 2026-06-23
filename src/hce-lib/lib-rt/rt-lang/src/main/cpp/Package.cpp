@@ -220,7 +220,7 @@ struct Package::Impl
    }
 };
 
-Package::Package(const std::string &filename) : impl(new Impl(filename))
+Package::Package(const std::string &filename) : impl(std::make_unique<Impl>(filename))
 {
    impl->filename = filename;
 }

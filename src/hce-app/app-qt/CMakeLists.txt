@@ -17,7 +17,7 @@ else ()
     set(ENABLE_CONSOLE_OUTPUT ON)
 endif ()
 
-find_package(Qt6 COMPONENTS Core Widgets Network PrintSupport REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets Network PrintSupport Svg REQUIRED)
 
 string(TIMESTAMP YEAR "%Y")
 
@@ -34,13 +34,17 @@ set(SOURCES
         src/main/cpp/events/ListenerControlEvent.cpp
         src/main/cpp/events/ListenerFrameEvent.cpp
         src/main/cpp/events/ListenerStatusEvent.cpp
+        src/main/cpp/events/TargetStateEvent.cpp
         src/main/cpp/events/SystemShutdownEvent.cpp
         src/main/cpp/events/SystemStartupEvent.cpp
         src/main/cpp/format/DataFormat.cpp
         src/main/cpp/model/ParserModel.cpp
+        src/main/cpp/model/ProtocolModel.cpp
         src/main/cpp/model/StreamFilter.cpp
         src/main/cpp/model/StreamModel.cpp
         src/main/cpp/model/TargetModel.cpp
+        src/main/cpp/model/TargetParser.cpp
+        src/main/cpp/protocol/DesfireParser.cpp
         src/main/cpp/protocol/ProtocolFrame.cpp
         src/main/cpp/protocol/ProtocolParser.cpp
         src/main/cpp/styles/IconStyle.cpp
@@ -51,6 +55,7 @@ set(SOURCES
         src/main/cpp/widgets/IconDelegate.cpp
         src/main/cpp/widgets/ParserDelegate.cpp
         src/main/cpp/widgets/ParserWidget.cpp
+        src/main/cpp/widgets/ProtocolWidget.cpp
         src/main/cpp/widgets/StreamDelegate.cpp
         src/main/cpp/widgets/StreamHeader.cpp
         src/main/cpp/widgets/StreamMenu.cpp
@@ -83,11 +88,11 @@ add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x050F00)
 
 target_include_directories(hce-lab PRIVATE ${PRIVATE_SOURCE_DIR})
 target_include_directories(hce-lab PRIVATE ${AUTOGEN_BUILD_DIR}/include)
-target_include_directories(hce-lab PRIVATE ${LIBUSB_INCLUDE_DIR})
+target_include_directories(hce-lab PRIVATE ${LIBUSB_INCLUDE_DIRS})
 
 target_link_libraries(hce-lab
         ${PLATFORM_LIBS}
-        ${LIBUSB_LIBRARY}
+        ${LIBUSB_LIBRARIES}
         hce-core
         hce-tasks
         hce-targets
@@ -96,7 +101,8 @@ target_link_libraries(hce-lab
         Qt6::Core
         Qt6::Widgets
         Qt6::Network
-        Qt6::PrintSupport)
+        Qt6::PrintSupport
+        Qt6::Svg)
 
 #-------------------------------------------------------------------------------
 # configure files

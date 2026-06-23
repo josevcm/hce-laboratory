@@ -193,7 +193,7 @@ struct QtApplication::Impl
 
 bool QtApplication::Impl::shuttingDown = false;
 
-QtApplication::QtApplication(int &argc, char **argv) : QApplication(argc, argv), impl(new Impl(this))
+QtApplication::QtApplication(int &argc, char **argv) : QApplication(argc, argv), impl(std::make_unique<Impl>(this))
 {
    // setup thread pool
    QThreadPool::globalInstance()->setMaxThreadCount(8);

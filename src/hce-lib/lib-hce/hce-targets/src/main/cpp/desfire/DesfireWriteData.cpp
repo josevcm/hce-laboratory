@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -24,7 +24,7 @@
 #include "Instance.h"
 #include "DesfireWriteData.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireWriteData::DesfireWriteData(Instance &bundle) : Command(bundle)
 {
@@ -81,6 +81,10 @@ int DesfireWriteData::process(rt::ByteBuffer &request, rt::ByteBuffer &response)
 
    // write data to file
    file->write(picc.buffer, offset, length);
+
+   // set picc as dirty state for std files
+   if (file->isDataFile())
+      picc.dirty = true;
 
    // send successful response
    return picc.sendAck(response);

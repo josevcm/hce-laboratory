@@ -102,6 +102,9 @@ struct Appender
    // global writer level (disabled by default)
    int level = -1;
 
+   // log line pattern (tokens: %d{fmt} %ms %p %c %t %m %n %%)
+   std::string pattern = "%d{%Y-%m-%d %H:%M:%S}.%ms %p [%t] (%c) %m%n";
+
    // events queue
    BlockingQueue<Log *> queue;
 
@@ -164,14 +167,11 @@ struct Appender
       while (!shutdown);
    }
 
-   void write(const Log *event) const
+   std::string formatLine(const Log *event) const
    {
       tm timeinfo {};
-      char date[32], buffer[65535];
-      std::stringstream ss;
-
       const time_t seconds = std::chrono::duration_cast<std::chrono::seconds>(event->time.time_since_epoch()).count();
-      const time_t millis = std::chrono::duration_cast<std::chrono::milliseconds>(event->time.time_since_epoch()).count() % 1000;
+      const int millis = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(event->time.time_since_epoch()).count() % 1000);
 
 #ifdef _WIN32
       localtime_s(&timeinfo, &seconds);
@@ -179,14 +179,91 @@ struct Appender
       localtime_r(&seconds, &timeinfo);
 #endif
 
-      strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", &timeinfo);
+      std::string result;
+      result.reserve(256);
 
-      ss << std::setw(2) << std::setfill('0') << event->thread;
+      for (size_t i = 0; i < pattern.size(); ++i)
+      {
+         if (pattern[i] != '%')
+         {
+            result += pattern[i];
+            continue;
+         }
 
-      const int size = snprintf(buffer, sizeof(buffer), "%s.%03d %s [%s] (%s) %s\n", date, static_cast<int>(millis), event->tag.c_str(), ss.str().c_str(), event->logger.c_str(), Format::format(event->format, event->params).c_str());
+         if (++i >= pattern.size()) break;
 
-      stream.write(buffer, size);
+         switch (pattern[i])
+         {
+            case 'd':
+            {
+               std::string timeFmt = "%Y-%m-%d %H:%M:%S";
 
+               if (i + 1 < pattern.size() && pattern[i + 1] == '{')
+               {
+                  const size_t end = pattern.find('}', i + 2);
+                  if (end != std::string::npos)
+                  {
+                     timeFmt = pattern.substr(i + 2, end - i - 2);
+                     i = end;
+                  }
+               }
+
+               char date[64];
+               strftime(date, sizeof(date), timeFmt.c_str(), &timeinfo);
+               result += date;
+
+               break;
+            }
+
+            case 'm':
+            {
+               if (i + 1 < pattern.size() && pattern[i + 1] == 's')
+               {
+                  char ms[8];
+                  snprintf(ms, sizeof(ms), "%03d", millis);
+                  result += ms;
+                  ++i;
+               }
+               else
+               {
+                  result += Format::format(event->format, event->params);
+               }
+               break;
+            }
+
+            case 'p': result += event->tag;
+               break;
+
+            case 'c': result += event->logger;
+               break;
+
+            case 't':
+            {
+               std::stringstream ss;
+               ss << std::setw(2) << std::setfill('0') << event->thread;
+               result += ss.str();
+               break;
+            }
+
+            case 'n': result += '\n';
+               break;
+
+            case '%': result += '%';
+               break;
+
+            default: result += '%';
+               result += pattern[i];
+               break;
+         }
+      }
+
+      return result;
+   }
+
+   void write(const Log *event) const
+   {
+      const std::string line = formatLine(event);
+      stream.write(line.c_str(), static_cast<std::streamsize>(line.size()));
       delete event;
    }
 
@@ -201,6 +278,11 @@ struct Appender
          // wait for thread to finish
          thread.join();
       }
+   }
+
+   void setPattern(const std::string &p)
+   {
+      pattern = p;
    }
 };
 
@@ -391,6 +473,11 @@ void Logger::setLoggerLevel(const std::string &target, const int level)
 void Logger::setLoggerLevel(const std::string &target, const std::string &level)
 {
    setLoggerLevel(target, getLevelIndex(level));
+}
+
+void Logger::setPattern(const std::string &pattern)
+{
+   appender->setPattern(pattern);
 }
 
 void Logger::init(std::ostream &stream, int level, bool buffered)

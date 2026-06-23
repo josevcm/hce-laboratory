@@ -107,6 +107,8 @@ class Logger
 
       static void setLoggerLevel(const std::string &target, const std::string &level);
 
+      static void setPattern(const std::string &format);
+
       static Logger *getLogger(const std::string &name, int level = WARN_LEVEL);
 
       static std::map<std::string, std::shared_ptr<Logger>> &loggers();

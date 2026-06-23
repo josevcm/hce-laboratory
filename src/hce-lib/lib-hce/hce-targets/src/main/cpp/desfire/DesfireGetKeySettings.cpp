@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@ This file is part of HCE-LABORATORY.
 #include "Instance.h"
 #include "DesfireGetKeySettings.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireGetKeySettings::DesfireGetKeySettings(Instance &bundle) : Command(bundle)
 {
@@ -34,6 +34,10 @@ int DesfireGetKeySettings::process(rt::ByteBuffer &request, rt::ByteBuffer &resp
 
    // update sessionIv
    picc.updateIv(request, 0);
+
+   // require master key authentication when directory listing is not free
+   if (!picc.isFreeDirectoryListing() && !picc.isAuthenticatedWithMasterKey())
+      return DESFIRE_STATUS_PERMISSION_DENIED;
 
    // prepare data
    const unsigned char keySettings1 = picc.application->keySettings;

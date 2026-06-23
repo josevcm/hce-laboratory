@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -24,7 +24,7 @@ This file is part of HCE-LABORATORY.
 #include "Instance.h"
 #include "DesfireChangeKey.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireChangeKey::DesfireChangeKey(Instance &bundle) : Command(bundle)
 {
@@ -57,8 +57,8 @@ int DesfireChangeKey::process(rt::ByteBuffer &request, rt::ByteBuffer &response)
    if (keyType != KeyType2K3DES && keyType != KeyType3K3DES && keyType != KeyTypeAES)
       return DESFIRE_STATUS_PARAMETER_ERROR;
 
-   // key type change is ONLY allowed for AID = 0 (master app)
-   if (!picc.isApplicationSelected(DESFIRE_MASTER_APP_ID) && keyType != 0)
+   // for application keys, keyType must match the app's cryptoMode; type upgrade is master key only
+   if (!picc.isApplicationSelected(DESFIRE_MASTER_APP_ID) && keyType != picc.application->cryptoMode)
       return DESFIRE_STATUS_PARAMETER_ERROR;
 
    // check if key to be changed exists
@@ -142,6 +142,9 @@ int DesfireChangeKey::changeKeyEV0(KeyEntry *keyEntry, unsigned int keyType, rt:
    LOG_INFO(log, "\tnewKey: 0x{x}", {newKey});
    LOG_INFO(log, "\tnewKeyType: 0x{02x}", {newKeyType});
    LOG_INFO(log, "\tnewKeyVersion: 0x{02x}", {newKeyVersion});
+
+   // set picc as dirty state
+   picc.dirty = true;
 
    return DESFIRE_STATUS_OK;
 }
@@ -245,6 +248,7 @@ int DesfireChangeKey::changeKeyEV1(KeyEntry *keyEntry, unsigned int keyType, rt:
    LOG_INFO(log, "\tnewKeyType: 0x{02x}", {newKeyType});
    LOG_INFO(log, "\tnewKeyVersion: 0x{02x}", {newKeyVersion});
 
+   picc.dirty = true;
    // send successful response
    return picc.sendAck(response);
 }

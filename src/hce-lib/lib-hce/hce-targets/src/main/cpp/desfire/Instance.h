@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -90,7 +90,7 @@ This file is part of HCE-LABORATORY.
 #define DESFIRE_STATUS_FILE_INTEGRITY_ERROR      0xF1
 
 // --- ISO Status values ---
-#define DESFIRE_ISO_STATUS_NOT_ENOUGH_DATA       0x6282
+#define DESFIRE_ISO_STATUS_NOT_ENOUGH_DATA       0x6985
 #define DESFIRE_ISO_STATUS_WRONG_LENGTH          0x6700
 #define DESFIRE_ISO_STATUS_ACCESS_NOT_ALLOWED    0x6982
 #define DESFIRE_ISO_STATUS_FILE_NOT_FOUND        0x6A82
@@ -102,7 +102,7 @@ This file is part of HCE-LABORATORY.
 #define DESFIRE_ISO_STATUS_NO_DIAGNOSTIC         0x6F00
 #define DESFIRE_ISO_STATUS_OK                    0x9000
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 using namespace crc;
 using namespace crypto;
@@ -197,10 +197,22 @@ struct Instance
    CipherDES des;
    CipherAES aes;
 
+   // PICC configuration flags (write-once)
+   bool formatDisabled = false;
+   bool randomId = false;
+
+   // default key applied to new applications (option 0x01), empty = use zero key
+   rt::ByteBuffer defaultKey = {};
+   unsigned int defaultKeyVersion = 0;
+
+   // user-defined ATS (option 0x02), empty = use hardware default
+   rt::ByteBuffer customAts = {};
+
    // current command and chaining status
    int protocol = 0;
    int command = 0;
    int chaining = 0;
+   bool dirty = false;
 
    // current command header a tx/rx buffer
    rt::ByteBuffer header;
@@ -355,6 +367,11 @@ struct Instance
    FileEntry *getFile(unsigned int fileId) const;
 
    /*
+    * get file reference by its Short File ID (SFI = isoId & 0x1F)
+    */
+   FileEntry *getFileByShortFID(unsigned int sfi) const;
+
+   /*
     * check effective communication mode for read operations
     */
    unsigned int authorizeForRead(unsigned int commSettings, const std::initializer_list<unsigned int> &keys) const;
@@ -367,7 +384,7 @@ struct Instance
    /*
     * update master key settings of current selected application
     */
-   void setKeySettings(unsigned int keySettings) const;
+   void setKeySettings(unsigned int keySettings);
 
    /*
     * check if current master key settings allow free directory listing
@@ -532,12 +549,12 @@ struct Instance
    /*
     * commit transaction
     */
-   bool commitData() const;
+   bool commitData();
 
    /*
     * rollback transaction
     */
-   bool rollbackData() const;
+   bool rollbackData();
 
    /*
     * detect communication mode and receive data from reader

@@ -89,10 +89,14 @@ rt::ByteBuffer CipherDES::encrypt(const rt::ByteBuffer &input, rt::ByteBuffer &i
 
    while (tmp.remaining() >= 8)
    {
+      ui64 crypt = 0;
       ui64 block = tmp.getLong(8, rt::ByteBuffer::BigEndian);
 
       // encrypt block with CBC send mode
-      ui64 crypt = des3->encrypt(block ^ iv64);
+      if (mode == CBCSend)
+         crypt = des3->decrypt(block ^ iv64);
+      else
+         crypt = des3->encrypt(block ^ iv64);
 
       // store encrypted block
       output.putLong(crypt, 8, rt::ByteBuffer::BigEndian);
@@ -127,7 +131,7 @@ rt::ByteBuffer CipherDES::decrypt(const rt::ByteBuffer &input, rt::ByteBuffer &i
       ui64 block = tmp.getLong(8, rt::ByteBuffer::BigEndian);
 
       // encrypt block with CBC send mode
-      if (mode == Legacy)
+      if (mode == CBCRecv)
          value = des3->encrypt(block) ^ iv64;
       else
          value = des3->decrypt(block) ^ iv64;

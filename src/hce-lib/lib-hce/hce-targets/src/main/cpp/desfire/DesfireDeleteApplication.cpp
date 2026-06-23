@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@ This file is part of HCE-LABORATORY.
 #include "Instance.h"
 #include "DesfireDeleteApplication.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireDeleteApplication::DesfireDeleteApplication(Instance &bundle) : Command(bundle)
 {
@@ -70,9 +70,29 @@ int DesfireDeleteApplication::process(rt::ByteBuffer &request, rt::ByteBuffer &r
    if (aid == DESFIRE_MASTER_APP_ID)
       return DESFIRE_STATUS_PARAMETER_ERROR;
 
-   // if application to be deleted is selected, deselect and set master
+   // check if application exists
+   if (!picc.hasApplication(aid))
+      return DESFIRE_STATUS_APPLICATION_NOT_FOUND;
+
+   // if application to be deleted is selected or authenticated, invalidate auth and deselect
    if (picc.isApplicationSelected(aid))
+   {
+      picc.invalidateAuth();
       picc.selectApplication(DESFIRE_MASTER_APP_ID);
+   }
+   else if (picc.isAuthenticated() && picc.auth->keyEntry != nullptr)
+   {
+      // auth key may belong to the application being deleted
+      const auto *appToDelete = picc.getApplication(aid);
+      for (const auto &[keyId, key]: appToDelete->keys)
+      {
+         if (picc.auth->keyEntry == &key)
+         {
+            picc.invalidateAuth();
+            break;
+         }
+      }
+   }
 
    // delete application
    picc.deleteApplication(aid);

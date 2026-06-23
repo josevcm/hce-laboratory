@@ -22,6 +22,7 @@
 #ifndef RT_BYTEBUFFER_H
 #define RT_BYTEBUFFER_H
 
+#include <algorithm>
 #include <iomanip>
 #include <sstream>
 #include <random>
@@ -113,7 +114,7 @@ class ByteBuffer : public Buffer<unsigned char>
 
       ByteBuffer &padding(const unsigned char value, const unsigned int block)
       {
-         fill(value, state.position % block == 0 ? 0 : 8 - state.position % block);
+         fill(value, state.position % block == 0 ? 0 : block - state.position % block);
          return *this;
       }
 

@@ -1,4 +1,5 @@
 {
+  "name": "Factory",
   "discovery": {
     "ATQA": 17411,
     "ATS": {
@@ -7,16 +8,20 @@
       "TC1": 2
     },
     "SAK": 32,
-    "UID": "04010203040580"
+    "UID": "0484346A794680"
   },
   "payload": {
+    "configuration": {
+      "formatCard": false,
+      "randomUid": false
+    },
     "directory": [
       {
         "aid": 0,
         "isoId": 16128,
         "isoName": "D2760000850100",
         "keySettings1": 15,
-        "keySettings2": 1,
+        "keySettings2": 33,
         "keys": [
           {
             "id": 0,

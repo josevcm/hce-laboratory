@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -22,7 +22,7 @@
 #include "Instance.h"
 #include "DesfireIsoAuthentication.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 enum Status
 {
@@ -150,7 +150,7 @@ int DesfireIsoAuthentication::externalAuth(rt::ByteBuffer &request, rt::ByteBuff
 
    // split rpcd1 / rpicc1
    const rt::ByteBuffer r1 = dkRpcd1Rpicc1.slice(0, rpicc1.size());
-   const rt::ByteBuffer r2 = dkRpcd1Rpicc1.slice(8, rpicc1.size());
+   const rt::ByteBuffer r2 = dkRpcd1Rpicc1.slice(rpicc1.size(), rpicc1.size());
 
    // check if rpicc1 matches
    if (r2 != rpicc1)
@@ -177,7 +177,7 @@ int DesfireIsoAuthentication::internalAuth(rt::ByteBuffer &request, rt::ByteBuff
    if (status != INTERNAL_AUTH)
       return DESFIRE_ISO_STATUS_NO_DIAGNOSTIC;
 
-   if (p1 != algorithm && p2 != secret)
+   if (p1 != algorithm || p2 != secret)
       return DESFIRE_ISO_STATUS_WRONG_PARAMETERS_P1P2;
 
    // data must be RPCD2 + LE field
@@ -239,12 +239,14 @@ int DesfireIsoAuthentication::internalAuth(rt::ByteBuffer &request, rt::ByteBuff
             break;
 
          case 24:
-         {
             sessionKey.put(rpcd1.slice(6, 4));
             sessionKey.put(rpicc2.slice(6, 4));
             sessionKey.put(rpcd1.slice(12, 4));
             sessionKey.put(rpicc2.slice(12, 4));
-         }
+            break;
+
+         default:
+            break;
       }
 
       auth.mode = ISOAuthentication;

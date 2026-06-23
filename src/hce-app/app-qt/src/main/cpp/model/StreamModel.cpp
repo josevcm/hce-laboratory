@@ -482,3 +482,5 @@ void StreamModel::setTimeSource(TimeSource timeSource)
 
    modelChanged();
 }
+
+

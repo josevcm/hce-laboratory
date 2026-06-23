@@ -23,6 +23,10 @@
 #define APP_TARGET_MODEL_H
 
 #include <QAbstractItemModel>
+#include <QJsonObject>
+#include <QString>
+
+class TargetItem;
 
 class TargetModel : public QAbstractItemModel
 {
@@ -33,6 +37,13 @@ class TargetModel : public QAbstractItemModel
       enum Columns
       {
          Name = 0, Type = 1
+      };
+
+      enum Roles
+      {
+         BytesRole = Qt::UserRole,
+         InfoRole  = Qt::UserRole + 1,
+         JsonRole  = Qt::UserRole + 2
       };
 
    public:
@@ -57,9 +68,21 @@ class TargetModel : public QAbstractItemModel
 
       QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
+      Qt::ItemFlags flags(const QModelIndex &index) const override;
+
+      bool load(const QString &fileName);
+
       void resetModel();
 
+      void setActiveTarget(int row);
+
+      void clearActiveTarget();
+
+      void updateContent(int row, const QJsonObject &root);
+
    private:
+
+      void mergeTree(const QModelIndex &parentIndex, TargetItem *existing, TargetItem *newItem);
 
       struct Impl;
       std::unique_ptr<Impl> impl;

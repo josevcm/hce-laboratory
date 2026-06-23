@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 This file is part of HCE-LABORATORY.
 
@@ -21,7 +21,7 @@ This file is part of HCE-LABORATORY.
 
 #include "Instance.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 using namespace crc;
 using namespace crypto;
@@ -257,6 +257,9 @@ void Instance::addApplication(const Application &app)
       // add ISO MasterFile
       isoAddDirectoryFile(mf);
    }
+
+   // set picc as dirty state
+   dirty = true;
 }
 
 /*
@@ -266,10 +269,15 @@ void Instance::deleteApplication(const unsigned int aid)
 {
    if (const auto it = applications.find(aid); it != applications.end())
    {
+      // remove ISO en
       if (it->second.isoEnabled)
          directoryFiles.erase(it->second.isoId);
 
+      // remove application
       applications.erase(it);
+
+      // set picc as dirty state
+      dirty = true;
    }
 }
 
@@ -376,6 +384,9 @@ void Instance::clearApplications()
       else
          ++it;
    }
+
+   // set picc as dirty state
+   dirty = true;
 }
 
 /*
@@ -406,6 +417,9 @@ void Instance::addFile(const FileEntry &file)
 
       isoAddElementaryFile(ef);
    }
+
+   // set picc as dirty state
+   dirty = true;
 }
 
 /*
@@ -414,7 +428,13 @@ void Instance::addFile(const FileEntry &file)
 void Instance::deleteFile(const unsigned int fileId)
 {
    assert(application != nullptr);
-   application->files.erase(fileId);
+
+   // remove file
+   if (application->files.erase(fileId) > 0)
+   {
+      // set picc as dirty state
+      dirty = true;
+   }
 }
 
 /*
@@ -439,6 +459,22 @@ FileEntry *Instance::getFile(unsigned int fileId) const
 {
    assert(application != nullptr);
    return &application->files.find(fileId)->second;
+}
+
+/*
+ * get file reference by its Short File ID (SFI = isoId & 0x1F)
+ */
+FileEntry *Instance::getFileByShortFID(unsigned int sfi) const
+{
+   if (directoryFile == nullptr)
+      return nullptr;
+
+   for (const auto &[id, ef]: directoryFile->ef)
+   {
+      if ((ef.isoId & 0x1F) == sfi)
+         return getFile(ef.fileId);
+   }
+   return nullptr;
 }
 
 /*
@@ -485,9 +521,14 @@ unsigned int Instance::authorizeForWrite(const unsigned int commSettings, const 
 /*
  * update master key settings of current selected application
  */
-void Instance::setKeySettings(unsigned int keySettings) const
+void Instance::setKeySettings(unsigned int keySettings)
 {
    assert(application != nullptr);
+
+   // set picc as dirty state if key settings is changed
+   if (application->keySettings != keySettings)
+      dirty = true;
+
    application->keySettings = keySettings;
 }
 
@@ -620,7 +661,9 @@ bool Instance::isAuthenticatedAnyKeys(const std::initializer_list<unsigned int> 
    if (auth == nullptr)
       return false;
 
-   return std::any_of(keys.begin(), keys.end(), [&](const unsigned int key) { return this->isAuthenticatedWithKey(key); });
+   return std::any_of(keys.begin(), keys.end(), [&](const unsigned int key) {
+      return this->isAuthenticatedWithKey(key);
+   });
 }
 
 /*
@@ -740,7 +783,7 @@ bool Instance::hasReadWriteAccess(const FileEntry *file) const
 bool Instance::hasChangeAccess(const FileEntry *file) const
 {
    assert(file != nullptr);
-   return hasAccess(file->changeKey());
+   return hasAccess(file->changeRightsKey());
 }
 
 /*
@@ -794,7 +837,7 @@ bool Instance::isNeverAccessKey(unsigned int key) const
 /*
  * commit transaction
  */
-bool Instance::commitData() const
+bool Instance::commitData()
 {
    if (!application)
       return false;
@@ -812,13 +855,21 @@ bool Instance::commitData() const
       }
    }
 
+   if (committed)
+   {
+      LOG_INFO(log, "transaction committed");
+
+      // set picc as dirty state
+      dirty = true;
+   }
+
    return committed;
 }
 
 /*
  * rollback transaction
  */
-bool Instance::rollbackData() const
+bool Instance::rollbackData()
 {
    if (!application)
       return false;
@@ -1164,8 +1215,9 @@ void Instance::encryptDataEV0(const rt::ByteBuffer &input, rt::ByteBuffer &outpu
    // prepare buffer for reading
    tmp.flip();
 
-   // encrypt data
-   output = auth->cipher->encrypt(tmp);
+   // encrypt data — no chain IV across commands (CBC send mode)
+   rt::ByteBuffer copyIv = auth->sessionIv.copy();
+   output = auth->cipher->encrypt(tmp, copyIv);
 }
 
 /*
@@ -1179,8 +1231,9 @@ int Instance::decryptDataEV0(const rt::ByteBuffer &input, rt::ByteBuffer &output
    // buffer for decryption
    rt::ByteBuffer tmp(length);
 
-   // encrypt data
-   rt::ByteBuffer plain = auth->cipher->decrypt(input);
+   // decrypt data — no chain IV across commands (CBC recv mode)
+   rt::ByteBuffer copyIv = auth->sessionIv.copy();
+   rt::ByteBuffer plain = auth->cipher->decrypt(input, copyIv);
 
    // read decrypted data
    plain.get(tmp);
@@ -1370,7 +1423,7 @@ void Instance::readHeader(const rt::ByteBuffer &request, unsigned int length)
 /*
  *
  */
-void Instance::updateIv(const rt::ByteBuffer &request, unsigned int length)
+void Instance::updateIv(const rt::ByteBuffer &request, const unsigned int length)
 {
    // read header
    request.peek(header, length);

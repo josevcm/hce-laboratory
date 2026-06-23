@@ -1,4 +1,4 @@
-/*
+﻿/*
 
   This file is part of HCE-LABORATORY.
 
@@ -24,7 +24,7 @@
 #include "Instance.h"
 #include "DesfireAuthenticate.h"
 
-namespace hce::targets {
+namespace hce::targets::desfire {
 
 DesfireAuthenticate::DesfireAuthenticate(Instance &bundle) : Command(bundle)
 {
@@ -65,7 +65,7 @@ int DesfireAuthenticate::process(rt::ByteBuffer &request, rt::ByteBuffer &respon
       picc.invalidateAuth();
 
       // initialize cipher with key
-      auth.cipher->init(auth.keyEntry->key, CipherDES::Legacy);
+      auth.cipher->init(auth.keyEntry->key, CipherDES::CBCRecv);
 
       // initialize rndB with random data
       random = rt::ByteBuffer::random(8);
@@ -132,14 +132,6 @@ int DesfireAuthenticate::process(rt::ByteBuffer &request, rt::ByteBuffer &respon
 
          break;
 
-      // 3 key DES, 192 bit session key
-      case 24:
-         sessionKey.put(rndA.slice(6, 4));
-         sessionKey.put(rndB.slice(6, 4));
-         sessionKey.put(rndA.slice(12, 4));
-         sessionKey.put(rndB.slice(12, 4));
-         break;
-
       default:
          return DESFIRE_STATUS_AUTHENTICATION_ERROR;
    }
@@ -150,8 +142,8 @@ int DesfireAuthenticate::process(rt::ByteBuffer &request, rt::ByteBuffer &respon
 
    // initialize cipher for session
    auth.mode = LegacyAuthentication;
-   auth.cipher->init(sessionKey, CipherDES::Legacy);
-   auth.sessionIv = rt::ByteBuffer::zero(0);
+   auth.cipher->init(sessionKey, CipherDES::CBCRecv);
+   auth.sessionIv = rt::ByteBuffer::zero(8);
    auth.sessionKey = sessionKey;
 
    // initialize auth status
