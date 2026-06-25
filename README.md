@@ -59,7 +59,7 @@ Timing measurement taken with [nfc-laboratory](https://github.com/josevcm/nfc-la
 
 A minimal ISO 14443-4 compliant stub target. Responds to all APDUs and serves as a base for custom emulation.
 
-### DESFire EV1 / EV2
+### DESFire EV1
 
 A full-featured server-side emulator. Card images are loaded from JSON configuration files (see [DESFIRE.md](DESFIRE.md) for the complete format reference).
 
@@ -208,8 +208,7 @@ targets/
 ├── desfire/
 │   ├── desfire-factory.json   — blank factory card (all-zero keys)
 │   ├── desfire-ndef.json      — NDEF application layout
-│   ├── desfire-ttp.json       — ticketing/transit example
-│   └── desfire-riyadh.json    — multi-application example
+│ 
 └── mifareplus/
     └── mifareplus-factory.json — blank factory card
 ```
