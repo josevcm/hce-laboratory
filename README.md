@@ -3,7 +3,7 @@
 A high-performance, low-latency implementation of the **ISO/IEC 14443-4 (ISO-DEP)** HCE designed for the **PN7160** NFC Controller. This framework enables advanced Card Emulation (CE) and protocol analysis on **PC** platforms.
 
 > [!NOTE]
-> This project is actively developed. The core DESFire EV1/EV2 emulator and MifarePlus SL3 emulator are fully operational, with a comprehensive integration test suite.
+> This project is actively developed. The core DESFire EV1 emulator and MifarePlus SL3 emulator are fully operational, with a comprehensive integration test suite.
 
 > [!IMPORTANT]
 > I'm open to ideas, but please don't open issues. I know there's still a lot to do...
