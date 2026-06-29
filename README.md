@@ -3,7 +3,7 @@
 A high-performance, low-latency implementation of the **ISO/IEC 14443-4 (ISO-DEP)** HCE designed for the **PN7160** NFC Controller. This framework enables advanced Card Emulation (CE) and protocol analysis on **PC** platforms.
 
 > [!NOTE]
-> This project is actively developed. The core DESFire EV1/EV2 emulator and MifarePlus SL3 emulator are fully operational, with a comprehensive integration test suite.
+> This project is actively developed. The core DESFire EV1 emulator and MifarePlus SL3 emulator are fully operational, with a comprehensive integration test suite.
 
 > [!IMPORTANT]
 > I'm open to ideas, but please don't open issues. I know there's still a lot to do...
@@ -18,7 +18,7 @@ The core engine handles complex state machines required for modern secure elemen
 ## Key Features
 
 * **ISO-DEP Compliance**: Full implementation of T4T emulation over ISO/IEC 14443-4.
-* **DESFire EV1/EV2 Emulation**: Complete server-side implementation of the DESFire protocol with 43 commands, supporting native (proprietary) and ISO 7816-4 wrapped APDUs.
+* **DESFire EV1 Emulation**: Complete server-side implementation of the DESFire protocol with 43 commands, supporting native (proprietary) and ISO 7816-4 wrapped APDUs.
 * **MifarePlus SL3 Emulation**: Security Level 3 emulation with AES-128 mutual authentication, per-sector key management, value block arithmetic (increment, decrement, restore, transfer), and encrypted read/write operations. 17 commands implemented.
 * **Hardware-Level Optimization**: Optimized for the PN7160 NCI 2.0 interface to achieve minimal frame-turnaround time (2.5–4 ms).
 * **Cryptographic Support**: AES-128, 2K3DES, and 3K3DES session key derivation with CMAC integrity protection.
@@ -59,7 +59,7 @@ Timing measurement taken with [nfc-laboratory](https://github.com/josevcm/nfc-la
 
 A minimal ISO 14443-4 compliant stub target. Responds to all APDUs and serves as a base for custom emulation.
 
-### DESFire EV1 / EV2
+### DESFire EV1
 
 A full-featured server-side emulator. Card images are loaded from JSON configuration files (see [DESFIRE.md](DESFIRE.md) for the complete format reference).
 
