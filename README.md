@@ -208,8 +208,7 @@ targets/
 ├── desfire/
 │   ├── desfire-factory.json   — blank factory card (all-zero keys)
 │   ├── desfire-ndef.json      — NDEF application layout
-│   ├── desfire-ttp.json       — ticketing/transit example
-│   └── desfire-riyadh.json    — multi-application example
+│ 
 └── mifareplus/
     └── mifareplus-factory.json — blank factory card
 ```
