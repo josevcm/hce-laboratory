@@ -40,6 +40,18 @@ endif ()
 find_package(PkgConfig REQUIRED)
 
 #-------------------------------------------------------------------------------
+# MPSSE selection: 
+# - libftdi: needs libusb (best for Linux)
+# - d2xx   : native FTDI D2XX driver
+#-------------------------------------------------------------------------------
+if (WIN32)
+  set(HCE_MPSSE_BACKEND "d2xx" CACHE STRING "MPSSE backend: libftdi | d2xx")
+else()
+  set(HCE_MPSSE_BACKEND "libftdi" CACHE STRING "MPSSE backend: libftdi | d2xx")
+endif()
+message(STATUS "MPSSE backend: ${HCE_MPSSE_BACKEND}")
+
+#-------------------------------------------------------------------------------
 # find dependency libusb-1.0
 #-------------------------------------------------------------------------------
 pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
@@ -47,7 +59,9 @@ pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
 #-------------------------------------------------------------------------------
 # find dependency ftdi1
 #-------------------------------------------------------------------------------
-pkg_check_modules(LIBFTDI REQUIRED libftdi1)
+if (HCE_MPSSE_BACKEND STREQUAL "libftdi")
+  pkg_check_modules(LIBFTDI REQUIRED libftdi1)
+endif()
 
 #-------------------------------------------------------------------------------
 # configure resources

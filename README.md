@@ -586,14 +586,6 @@ In **Hardware Specific → IO Controls**, set all ports to **Tristate**:
 
 ![ft_prog-config2.png](doc/screenshots/ft_prog-config2.png)
 
-### Replace the driver with Zadig
-
-Download [zadig](https://zadig.akeo.ie/). Select **Options → List All Devices**, find your FT232H adapter (listed as **Single RS232-HS**), choose **libusbK** (or WinUSB), and press **Replace Driver**.
-
-![zadig-config1.png](doc/screenshots/zadig-config1.png)
-
-![zadig-config2.png](doc/screenshots/zadig-config2.png)
-
 ---
 
 ## Reference Links
